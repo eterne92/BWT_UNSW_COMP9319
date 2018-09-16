@@ -26,18 +26,6 @@ void print_T(char* T, int len)
     printf("\n");
 }
 
-void print_SA(int* SA, int len)
-{
-    for (int i = 0; i < len; i++) {
-        if (SA[i] == EMPTY) {
-            printf("^ ");
-            continue;
-        }
-        printf("%d ", SA[i]);
-    }
-    printf("\n");
-}
-
 int set_lms_0(char* T, int len)
 {
     bool next_s = true;
@@ -51,13 +39,7 @@ int set_lms_0(char* T, int len)
         }
     }
 
-    int lms_cnt = 0;
-    for (int i = 0; i < len - 1; i++) {
-        if (!IS_S(T[i]) && IS_S(T[i + 1])) {
-            lms_cnt++;
-        }
-    }
-    return lms_cnt;
+    return 0;
 }
 
 void gen_bkt(char* T, int* bkt, int len, enum DIRECTION dir)
@@ -217,7 +199,6 @@ int renameLMS_0(char* T, int* SA, int T1_len, int T_len)
     int name;
     int namecnt = 0;
     int* start = SA + T1_len;
-    printf("T1 len is %d, %d\n", T1_len, T_len);
     /* first every del got it's own name */
     for (int i = 0; i < del_size; i++) {
         int pos = SA[i];
@@ -230,7 +211,6 @@ int renameLMS_0(char* T, int* SA, int T1_len, int T_len)
     int prev, now, prev_len;
     prev = SA[del_size - 1];
     prev_len = lms_len_0(T, prev, T_len);
-    printf("prev len is %d\n", prev_len);
     for (int i = del_size; i < T1_len; i++) {
         bool same = false;
         now = SA[i];
@@ -334,49 +314,39 @@ int level0_main(char *T, int *SA, int *bkt, int len, char del){
         }
     }
 
-    int lms_size = set_lms_0(T, len);
+    set_lms_0(T, len);
     // print_T(T, len);
-    printf("lms size if %d\n", lms_size);
 
     gen_bkt(T, bkt, len, END);
     place_lms_0(T, SA, len, bkt);
 
-    // print_SA(SA, len);
     gen_bkt(T, bkt, len, START);
     induceL_0(T, SA, bkt, len, true);
-    // print_SA(SA, len);
 
     gen_bkt(T, bkt, len, END);
     induceS_0(T, SA, bkt, len, true);
-    // print_SA(SA, len);
 
     int T1_len = compactLMS_0(SA, T, len);
-    // print_SA(SA, len);
 
     int name_size = renameLMS_0(T, SA, T1_len, len);
     int* T1 = SA + len - T1_len;
-    // print_SA(SA, len);
     if (name_size < T1_len) {
         /* need recursive */
         printf("need recursive name size is %d\n", name_size);
         level1_main(T1, SA, T1_len);
     } else {
-        for (int i = 0; i < lms_size; i++) {
+        for (int i = 0; i < T1_len; i++) {
             int pos = T1[i];
             SA[pos] = i;
         }
     }
-    // print_SA(SA, len);
     gen_bkt(T, bkt, len, END);
     retrive0(T, SA, bkt, len, T1_len);
-    // print_SA(SA, len);
 
     gen_bkt(T, bkt, len, START);
     induceL_0(T, SA, bkt, len, false);
-    // print_SA(SA, len);
 
     gen_bkt(T, bkt, len, END);
     induceS_0(T, SA, bkt, len, false);
-    // print_SA(SA, len);
     return 0;
 }

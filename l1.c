@@ -1,5 +1,4 @@
 #include "SACA_k.h"
-#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,12 +18,6 @@ enum LS {
     SMALL
 };
 
-static inline void check_T(int* T, int len)
-{
-    for (int i = 0; i < len; i++) {
-        assert(T[i] != EMPTY);
-    }
-}
 
 static int shiftBkt(int* SA, int pos, int i, enum SHIFT sft)
 {
@@ -118,20 +111,13 @@ static int storeBktL(int* SA, int pos, int j, int i, int len)
 
 int level1_main(int* T, int* SA, int len)
 {
-    check_T(T, len);
-    // print_SA(T, len);
     place_lms_1(T, SA, len);
-    // print_SA(SA, len);
     induceL_1(T, SA, len, true);
-    // print_SA(SA, len);
     induceS_1(T, SA, len, true);
-    // print_SA(SA, len);
 
     /* now all lms are in position, compact them */
     int T1_len = compactLMS_1(SA, T, len);
-    // print_SA(SA, len);
     int name_size = renameLMS_1(T, SA, T1_len, len);
-    // print_SA(SA, len);
 
     int *T1 = SA + len - T1_len;
 
@@ -148,9 +134,8 @@ int level1_main(int* T, int* SA, int len)
     }
     retrive1(T, SA, len, T1_len);
     induceL_1(T, SA, len, false);
-    // print_SA(SA, len);
     induceS_1(T, SA, len, false);
-    // print_SA(SA, len);
+    printf("level done\n");
 }
 
 int set_lms_1(int* T, int len)
@@ -166,13 +151,7 @@ int set_lms_1(int* T, int len)
         }
     }
 
-    int lms_cnt = 0;
-    for (int i = 0; i < len - 1; i++) {
-        if (!IS_S(T[i]) && IS_S(T[i + 1])) {
-            lms_cnt++;
-        }
-    }
-    return lms_cnt;
+    return 0;
 }
 
 int place_lms_1(int* T, int* SA, int len)
@@ -390,13 +369,11 @@ int renameLMS_1(int* T, int* SA, int T1_len, int T_len)
         if (same) {
             int pos = SA[i];
             SA[name]++;
-            assert(start[pos / 2] == EMPTY);
             start[pos / 2] = name;
         } else {
             int pos = SA[i];
             name = i;
             SA[name] = 1;
-            assert(start[pos / 2] == EMPTY);
             start[pos / 2] = name;
             namecnt++;
             prev = now;
@@ -415,8 +392,6 @@ int renameLMS_1(int* T, int* SA, int T1_len, int T_len)
             cnt++;
         }
     }
-    printf("cnt = %d, T1_len = %d\n", cnt, T1_len);
-    assert(cnt == T1_len);
 
 
     if (namecnt == T1_len) {
@@ -467,7 +442,6 @@ int retrive1(int* T, int* SA, int len, int T1_len)
     for (int i = T1_len; i < len; i++) {
         SA[i] = EMPTY;
     }
-    // print_SA(SA, len);
 
     /* now place the lms */
     int cur, pre, pos;
