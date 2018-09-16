@@ -1,12 +1,21 @@
 #include "SACA_k.h"
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-#define CHAR_VAL(x) abs(x)
-#define SET_S(x) (x = -x)
-#define IS_S(x) (x < 0)
+/* LEVEL 1 IS MUCH MORE TRICKY 
+ * EACH NAME ALWAYS POINT TO THE
+ * START/END OF EACH BUCKET BASE
+ * ON THE TYPE.
+ */
+
+/* the original paper used some very very tricky
+ * math technique to determain the type of a element
+ * But since there is a easier way to do that. I
+ * slightly modified it. This could slow the performance
+ * down a little bit, since we need to scan T1 one more
+ * time to set the S/L type. But it's still linear.
+ */
 
 enum SHIFT {
     LEFT,
@@ -19,6 +28,7 @@ enum LS {
 };
 
 
+/* Shift a bkt if it is ocupied by other element */
 static int shiftBkt(int* SA, int pos, int i, enum SHIFT sft)
 {
     int tmp, tmp2;
@@ -28,6 +38,7 @@ static int shiftBkt(int* SA, int pos, int i, enum SHIFT sft)
     } else {
         dir = 1;
     }
+
     tmp = SA[pos];
     for (t = pos + dir; SA[t] >= 0 || SA[t] == EMPTY; t += dir) {
         tmp2 = SA[t];
@@ -36,6 +47,7 @@ static int shiftBkt(int* SA, int pos, int i, enum SHIFT sft)
     }
     SA[t] = tmp;
 
+    /* mesure the step if we shift elements over the current position */
     if (t < i && sft == LEFT) {
         return 0;
     } else if (t > i && sft == RIGHT) {
@@ -44,6 +56,10 @@ static int shiftBkt(int* SA, int pos, int i, enum SHIFT sft)
     return 1;
 }
 
+
+/* storebkt after the borrowed slot is now empty
+ * or there is no borrowed slot at all.
+ */
 static int storeBktS(int* SA, int pos, int j, int i, int len)
 {
     int step = 1;
@@ -123,7 +139,7 @@ int level1_main(int* T, int* SA, int len)
 
     if(name_size < T1_len){
         /* need recursive */
-        printf("need recursive name size is %d\n", name_size);
+        // printf("need recursive name size is %d\n", name_size);
         level1_main(T1, SA, T1_len);
     }
     else{
@@ -132,12 +148,16 @@ int level1_main(int* T, int* SA, int len)
             SA[pos] = i;
         }
     }
+
+    /* LMS are sorted */
     retrive1(T, SA, len, T1_len);
     induceL_1(T, SA, len, false);
     induceS_1(T, SA, len, false);
     printf("level done\n");
 }
 
+/* same technique as level0, but we get rid of delimeters
+ */
 int set_lms_1(int* T, int len)
 {
     bool next_s = true;
@@ -230,6 +250,7 @@ int induceL_1(int* T, int* SA, int len, bool erase)
         }
     }
 
+    /* get rid of counters */
     for (int i = 1; i < len; i++) {
         if (SA[i] != EMPTY) {
             if (SA[i] < 0) {
@@ -257,6 +278,8 @@ int induceS_1(int* T, int* SA, int len, bool erase)
         if(j < 0){
             continue;
         }
+
+        /* we only induce S types */
         if (!IS_S(T[j])) {
             continue;
         }
@@ -283,6 +306,7 @@ int induceS_1(int* T, int* SA, int len, bool erase)
         }
     }
 
+    /* get rid of counters */
     for (int i = 0; i < len; i++) {
         if (SA[i] != EMPTY) {
             if (SA[i] < 0) {

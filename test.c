@@ -11,7 +11,7 @@ int main(int argc, char const* argv[])
     int len;
     int *SA, *bkt;
     char* T;
-    FILE* f = fopen("newtest.txt", "r");
+    FILE* f = fopen("w3c2", "r");
     fseek(f, 0, SEEK_END);
     len = ftell(f);
     fseek(f, 0, SEEK_SET);
@@ -21,18 +21,30 @@ int main(int argc, char const* argv[])
     bkt = malloc(sizeof(int) * BKTSIZE);
 
     fread(T, sizeof(char), len, f);
+    fclose(f);
+    for(int i = 0 ;i < len;i++){
+        if(T[i] == '$'){
+            T[i] = 1;
+        }
+    }
     time_t read_done = time(NULL);
     printf("read done, with time as %lf\n", difftime(read_done, start));
     char del = '$';
     level0_main(T, SA, bkt, len, del);
     time_t end = time(NULL);
     printf("SA construct done, with time as %lf\n", difftime(end, read_done));
+    free(bkt);
+
+    for(int i = 0 ;i < len;i++){
+        char c = abs(T[SA[i]]);
+        if(c == 1){
+            c = del;
+        }
+        printf("%c", c);
+    }
+    printf("\n");
 
     char* BWT = (char*)SA;
-
-    for(int i = 0;i < len;i++){
-        printf("%d ", SA[i]);
-    }
 
     for (int i = 0; i < len; i++) {
         char c;
@@ -49,10 +61,12 @@ int main(int argc, char const* argv[])
     }
 
     memcpy(T, BWT, len * sizeof(char));
+    free(SA);
 
     FILE* f2 = fopen("output.txt", "w");
     fwrite(T, sizeof(char), len * sizeof(char), f2);
-    free(SA);
+    free(T);
+    fclose(f2);
     time_t write_done = time(NULL);
     printf("write done, with time as %lf\n", difftime(write_done, end));
 }
