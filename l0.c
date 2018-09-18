@@ -1,6 +1,5 @@
 #include "SACA_k.h"
 #include <stdbool.h>
-#include <stdio.h>
 #include <string.h>
 
 /* at level 0

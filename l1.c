@@ -1,6 +1,5 @@
 #include "SACA_k.h"
 #include <stdbool.h>
-#include <stdio.h>
 #include <string.h>
 
 /* LEVEL 1 IS MUCH MORE TRICKY 
@@ -153,7 +152,6 @@ int level1_main(int* T, int* SA, int len)
     retrive1(T, SA, len, T1_len);
     induceL_1(T, SA, len, false);
     induceS_1(T, SA, len, false);
-    printf("level done\n");
 }
 
 /* same technique as level0, but we get rid of delimeters
