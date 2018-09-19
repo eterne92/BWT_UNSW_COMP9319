@@ -36,7 +36,7 @@ void gen_bkt(char* T, int* bkt, int len, enum DIRECTION dir)
 {
     memset(bkt, 0, BKTSIZE * sizeof(int));
     for (int i = 0; i < len; i++) {
-        char c = CHAR_VAL(T[i]);
+        int c = CHAR_VAL(T[i]);
         bkt[c]++;
     }
 
@@ -91,7 +91,7 @@ int place_lms_0(char* T, int* SA, int len, int* bkt)
         }
         if (!IS_S(T[i]) && IS_S(T[i + 1])) {
             /* T[i + 1] is a LMS */
-            char c = CHAR_VAL(T[i + 1]);
+            int c = CHAR_VAL(T[i + 1]);
             int pos = bkt[c];
             SA[pos] = i + 1;
             bkt[c]--;
@@ -101,6 +101,7 @@ int place_lms_0(char* T, int* SA, int len, int* bkt)
     }
     SA[0] = len - 1;
     del_size++;
+    return cnt;
 }
 
 
@@ -115,7 +116,7 @@ int induceL_0(char* T, int* SA, int* bkt, int len, bool erase)
                 continue;
             }
             /* now it's a L type */
-            char c = CHAR_VAL(T[j]);
+            int c = CHAR_VAL(T[j]);
             int pos = bkt[c];
             SA[pos] = j;
             bkt[c]++;
@@ -130,19 +131,19 @@ int induceL_0(char* T, int* SA, int* bkt, int len, bool erase)
             }
         }
     }
+    return 0;
 }
 
 int induceS_0(char* T, int* SA, int* bkt, int len, bool erase)
 {
     for (int i = len - 1; i >= 0; i--) {
         if (SA[i] != 0) {
-            int prev = SA[i];
             int j = SA[i] - 1;
             if (!IS_S(T[j])) {
                 continue;
             }
             /* now it's a S type */
-            char c = CHAR_VAL(T[j]);
+            int c = CHAR_VAL(T[j]);
             /* still we don't care about the
              * delimeters. Since they are always
              * LMS
@@ -157,6 +158,7 @@ int induceS_0(char* T, int* SA, int* bkt, int len, bool erase)
             }
         }
     }
+    return 0;
 }
 
 /* Move all the LMS to the left end of SA
@@ -330,13 +332,15 @@ int retrive0(char* T, int* SA, int* bkt, int len, int T1_len)
      * base on the bkt.
      */
     for (int i = T1_len - 1; i >= del_size; i--) {
-        char c = CHAR_VAL(T[SA[i]]);
+        int c = CHAR_VAL(T[SA[i]]);
         int tmp = SA[i];
         SA[i] = 0;
         int pos = bkt[c];
         bkt[c]--;
         SA[pos] = tmp;
     }
+
+    return 0;
 }
 
 

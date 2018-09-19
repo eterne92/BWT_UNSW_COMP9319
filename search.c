@@ -7,6 +7,7 @@
 #define BUFSIZE (13 * 1024 * 1024)
 #define BKTSIZE 128
 #define MASK (0xFFFFFE00)
+char delimeter;
 
 int backSearch(const char *query);
 
@@ -18,7 +19,6 @@ int count(FILE *bwt, FILE *occ, const char *query, int *bkt);
 int main(int argc, char const *argv[])
 {
     const char *deli_string = argv[1];
-    char delimeter;
     if (strlen(deli_string) > 1)
     {
         delimeter = '\n';
@@ -49,19 +49,23 @@ int main(int argc, char const *argv[])
         makeOcc(occ_table, bwt_file, bkt);
     }
     else{
-        fseek(occ, sizeof(int) * BKTSIZE, SEEK_END);
+        fseek(occ, -sizeof(int) * BKTSIZE, SEEK_END);
         fread(bkt, sizeof(int), BKTSIZE, occ);
     }
 
     int sum = 0;
     for(int i = 0;i < BKTSIZE + 1;i++){
-        bkt[i] = sum;
+        int tmp = sum;
         sum += bkt[i];
+        bkt[i] = tmp;
+        printf("%c, %d\n", i, bkt[i]);
     }
     occ = fopen(occ_table, "r");
 
     if (strcmp(opt, "-m") == 0)
     {
+        int cnt = count(bwt_file, occ, query_string, bkt);
+        printf("cnt is %d\n", cnt);
     }
 
 
@@ -85,6 +89,9 @@ int makeOcc(char *occ_table, FILE *bwt_file, int *bkt)
         for (int i = 0; i < readsize; i++)
         {
             char c = readbuf[i];
+            if(c == delimeter){
+                c = 0;
+            }
             bkt[c]++;
             if (i % 1024 == 1024 - 1)
             {
@@ -103,6 +110,7 @@ int makeOcc(char *occ_table, FILE *bwt_file, int *bkt)
 }
 
 int getOcc(int n, char c, FILE *occ, FILE *bwt){
+    printf("%c in\n", c);
     int ret = 0;
     /* mask to get which entry */
     size_t offset = ((n & MASK) >> 10);
@@ -110,16 +118,21 @@ int getOcc(int n, char c, FILE *occ, FILE *bwt){
     offset = offset * sizeof(int) * BKTSIZE;
     fseek(occ, 0, SEEK_END);
     size_t len = ftell(occ);
+    // printf("len = %d, n = %d\n", len, n);
 
     assert(n <= len);
     /* if offset is larger means we run into the last block */
     if(offset >= len){
-        offset = len - sizeof(int) * BKTSIZE;
+        offset = len;
     }
-    printf("offset is %d\n", offset);
-    fseek(occ, offset, SEEK_SET);
+    // printf("offset is %d\n", offset);
     int *bkt = malloc(sizeof(int) * BKTSIZE);
-    fread(bkt, sizeof(int), BKTSIZE, occ);
+    memset(bkt, 0, sizeof(int) * BKTSIZE);
+    if(offset != 0){
+        int real_offset = offset - BKTSIZE * sizeof(int);
+        fseek(occ, real_offset, SEEK_SET);
+        fread(bkt, sizeof(int), BKTSIZE, occ);
+    }
     ret = bkt[c];
     free(bkt);
 
@@ -127,28 +140,36 @@ int getOcc(int n, char c, FILE *occ, FILE *bwt){
     offset = offset / (sizeof(int) * BKTSIZE) * 1024;
     printf("offset %d\n", offset);
     char *readbuf = malloc(sizeof(char) * 1024);
+    fseek(bwt, offset, SEEK_SET);
     fread(readbuf, sizeof(char), 1024, bwt);
+    printf("%d occ before\n", ret);
 
-    for(int i = 0;i < n - offset;i++){
-        if(readbuf[i] = c){
+    for(int i = 0;i <= n - offset;i++){
+        if(readbuf[i] == c){
             ret++;
         }
     }
 
     free(readbuf);
+    printf("%d occ\n", ret);
     return ret;
 }
 
 int count(FILE *bwt, FILE *occ, const char *query, int *bkt){
-    int start = bkt[query[0]];
-    int end = bkt[query[0] + 1];
+    printf("query is %s\n", query);
     int len = strlen(query);
-    for(int i = 1;i < len;i++){
-        start = getOcc(start, query[i], occ, bwt);
-        end = getOcc(end, query[i], occ, bwt);
-        if(start == end){
-
+    int start = bkt[query[len - 1]];
+    int end = bkt[query[len - 1] + 1] - 1;
+    printf("start is %d, end is %d\n", start, end);
+    for(int i = len - 2;i >= 0;i--){
+        start = getOcc(start - 1, query[i], occ, bwt) + bkt[query[i]];
+        end = getOcc(end, query[i], occ, bwt) + bkt[query[i]];
+        printf("start is %d, end is %d\n", start, end);
+        if(start > end){
+            return 0;
         }
     }
+
+    return end - start;
 
 }

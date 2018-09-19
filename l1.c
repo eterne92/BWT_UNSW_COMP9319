@@ -152,6 +152,7 @@ int level1_main(int* T, int* SA, int len)
     retrive1(T, SA, len, T1_len);
     induceL_1(T, SA, len, false);
     induceS_1(T, SA, len, false);
+    return 0;
 }
 
 /* same technique as level0, but we get rid of delimeters
@@ -207,6 +208,7 @@ int place_lms_1(int* T, int* SA, int len)
     }
 
     SA[0] = len - 1;
+    return 0;
 }
 
 int induceL_1(int* T, int* SA, int len, bool erase)
@@ -261,6 +263,7 @@ int induceL_1(int* T, int* SA, int len, bool erase)
             }
         }
     }
+    return 0;
 }
 
 int induceS_1(int* T, int* SA, int len, bool erase)
@@ -317,6 +320,7 @@ int induceS_1(int* T, int* SA, int len, bool erase)
             }
         }
     }
+    return 0;
 }
 
 int compactLMS_1(int* SA, int* T, int len)
@@ -480,4 +484,5 @@ int retrive1(int* T, int* SA, int len, int T1_len)
         SA[pos] = j;
         pos--;
     }
+    return 0;
 }
