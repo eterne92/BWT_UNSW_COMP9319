@@ -1,0 +1,5 @@
+*.o
+bwtencode
+bwtsearch
+.vscode/
+

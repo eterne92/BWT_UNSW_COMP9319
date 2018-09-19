@@ -11,7 +11,7 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
     fseek(f, 0, SEEK_SET);
     /* touch memory very carefully */
     char* T = malloc(sizeof(char) * len);
-    fread(T, sizeof(char), sizeof(char) * len, f);
+    fread(T, sizeof(char), len, f);
     fclose(f);
 
     /* modify the data to suit the algo */
@@ -50,23 +50,12 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
     int pos = 0;
     for (int i = len - 1; i >= 0; i--) {
         if (abs(T[i]) == 1 || abs(T[i]) == 2) {
-            printf("find del\n");
             SA[pos] = i;
             pos++;
         }
     }
 
-    /* With this proper SA, we can construct a index file in O(n) time 
-     * and this file would only contain n / 4 * 4bytes infor, so it would
-     * not be bigger than the original one
-     */
-
     
-    for(int i = 0;i < len;i++){
-        printf("%d ", SA[i]);
-    }
-    printf("\n");
-
     /* construct BWT based on SA and modified T */
     char* BWT = (char*)SA;
 
@@ -84,16 +73,16 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
         BWT[i] = c;
     }
 
-    printf("%s", BWT);
 
+    memcpy(T, BWT, len);
     /* free SA and bkt */
     free(bkt);
-
-    f = fopen(output, "w");
-    fwrite(BWT, sizeof(char), len, f);
-    fclose(f);
     free(SA);
     free(BWT);
+
+    f = fopen(output, "w");
+    fwrite(T, sizeof(char), len, f);
+    fclose(f);
     free(T);
 }
 
@@ -119,6 +108,7 @@ int main(int argc, char const* argv[])
     strcpy(aux_file, output_file);
     snprintf(aux_file, 5, ".aux");
     char* BWT = encode(encode_file, output_file, aux_file,delimeter);
+    free(aux_file);
 
     return 0;
 }
