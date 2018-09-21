@@ -1,12 +1,13 @@
+CFLAG = -std=c11 -g
 all: encoder
 encoder: clean level0 level1
-	gcc -o3 -o bwtencode encoder.c l0.o l1.o
+	gcc $(CFLAG) -o bwtencode encoder.c l0.o l1.o
 test: clean level0 level1
-	gcc -o3 -o test.o test.c l0.o l1.o
+	gcc $(CFLAG) -o test.o test.c l0.o l1.o
 level0:
-	gcc -o3 -o l0.o -c l0.c
+	gcc $(CFLAG) -o l0.o -c l0.c
 level1:
-	gcc -o3 -o l1.o -c l1.c
+	gcc $(CFLAG) -o l1.o -c l1.c
 clean:
 	rm -rf *.o
 # all: encoder

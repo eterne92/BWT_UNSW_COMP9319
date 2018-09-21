@@ -50,7 +50,6 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
     int pos = 0;
     for (int i = len - 1; i >= 0; i--) {
         if (abs(T[i]) == 1 || abs(T[i]) == 2) {
-            printf("find del\n");
             SA[pos] = i;
             pos++;
         }
@@ -62,10 +61,6 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
      */
 
     
-    for(int i = 0;i < len;i++){
-        printf("%d ", SA[i]);
-    }
-    printf("\n");
 
     /* construct BWT based on SA and modified T */
     char* BWT = (char*)SA;
@@ -84,7 +79,6 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
         BWT[i] = c;
     }
 
-    printf("%s", BWT);
 
     /* free SA and bkt */
     free(bkt);
@@ -93,7 +87,6 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
     fwrite(BWT, sizeof(char), len, f);
     fclose(f);
     free(SA);
-    free(BWT);
     free(T);
 }
 
