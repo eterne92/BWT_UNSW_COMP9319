@@ -157,8 +157,8 @@ int count(FILE *bwt, FILE *occ, const char *query, int *bkt){
     int start = bkt[query[len - 1]];
     int end = bkt[query[len - 1] + 1] - 1;
     for(int i = len - 2;i >= 0;i--){
-        start = getOcc(start - 1, query[i], occ, bwt) + bkt[query[i]];
-        end = getOcc(end, query[i], occ, bwt) + bkt[query[i]];
+        start = getOcc(start, query[i], occ, bwt) + bkt[query[i]] - 1;
+        end = getOcc(end, query[i], occ, bwt) + bkt[query[i]] - 1;
         if(start > end){
             return 0;
         }
