@@ -34,6 +34,7 @@
 
 #define MEM_MAX (48 * 1024 * 1024)
 // #define MEM_MAX (19 * 1024 * 1024)
+// #define MEM_MAX 3
 
 
 enum DIRECTION {

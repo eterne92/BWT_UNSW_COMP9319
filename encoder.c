@@ -49,11 +49,10 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
     fread(T, sizeof(char), sizeof(char) * len, f);
     fclose(f);
 
-    int* SA = malloc(sizeof(int) * len);
-    memset(SA, 0, sizeof(int) * len);
+    int* SA = malloc(sizeof(int) * (tmp_len / 2 + 1));
 
     FILE *SA_FILE = fopen("ext", "r");
-    fread(SA, sizeof(int), tmp_len, SA_FILE);
+    fread(SA, sizeof(int), tmp_len / 2, SA_FILE);
     /* NOW SA IS SORTED */
     /* since all real records delimeters are in bkt 1 and 
      * empty records in bkt 2(which we don't care). And all
@@ -79,18 +78,34 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
     f = fopen(output, "w+");
     printf("traling is %d\n", trailing_del);
     fwrite(T + tmp_len, sizeof(char), trailing_del, f);
+
     
 
     /* construct BWT based on SA and modified T */
-    char* BWT = (char*)SA;
+    char *BWT = malloc(sizeof(char) * len);
 
-    for (int i = 0; i < len; i++) {
+    int i = 0;
+    for (i = 0; i < tmp_len / 2; i++) {
         char c;
         if (SA[i] > 0) {
             int j = SA[i] - 1;
-            c = abs(T[j]);
+            c = T[j];
         } else {
-            c = abs(T[len - 1]);
+            c = T[tmp_len - 1];
+        }
+        BWT[i] = c;
+    }
+
+    fread(SA, sizeof(int), tmp_len - tmp_len / 2, SA_FILE);
+
+    for(;i < tmp_len;i++){
+        char c;
+        int index = i - tmp_len / 2;
+        if (SA[index] > 0) {
+            int j = SA[index] - 1;
+            c = T[j];
+        } else {
+            c = T[tmp_len - 1];
         }
         BWT[i] = c;
     }
