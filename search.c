@@ -69,7 +69,7 @@ int main(int argc, char const *argv[])
         printf("cnt is %d\n", cnt);
     }
 
-    decode(bwt_file, occ, 1, bkt);
+    decode(bwt_file, occ, 2, bkt);
 
 
     return 0;

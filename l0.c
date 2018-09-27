@@ -1,6 +1,7 @@
 #include "SACA_k.h"
 #include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
 
 /* at level 0
  * A extra bkt array is used to record the bktsize
@@ -8,6 +9,12 @@
 
 
 int del_size = 0;
+
+void print_SA(int *SA, int len){
+    for(int i = 0;i < len;i++){
+        printf("%d ", SA[i]);
+    }
+}
 
 static int get_SA(int *SA, int index){
     return SA[index];
@@ -91,7 +98,8 @@ int place_lms_0(char* T, int* SA, int len, int* bkt)
              * of T is always 0.
              */
             int pos = bkt[1];
-            SA[pos] = i + 1;
+            // SA[pos] = i + 1;
+            set_SA(SA, pos, i + 1);
             bkt[1]--;
             cnt++;
             del_size++;
@@ -101,13 +109,15 @@ int place_lms_0(char* T, int* SA, int len, int* bkt)
             /* T[i + 1] is a LMS */
             char c = CHAR_VAL(T[i + 1]);
             int pos = bkt[c];
-            SA[pos] = i + 1;
+            // SA[pos] = i + 1;
+            set_SA(SA, pos, i + 1);
             bkt[c]--;
 
             cnt++;
         }
     }
-    SA[0] = len - 1;
+    // SA[0] = len - 1;
+    set_SA(SA, 0, len - 1);
     del_size++;
 }
 
@@ -115,9 +125,13 @@ int place_lms_0(char* T, int* SA, int len, int* bkt)
 int induceL_0(char* T, int* SA, int* bkt, int len, bool erase)
 {
     for (int i = 0; i < len; i++) {
-        if (SA[i] != 0) {
-            int prev = SA[i];
-            int j = SA[i] - 1;
+        int SA_i = get_SA(SA, i);
+        // if (SA[i] != 0) {
+        if(SA_i != 0){
+            // int prev = SA[i];
+            int prev = SA_i;
+            // int j = SA[i] - 1;
+            int j = SA_i - 1;
             if (T[j] <= 0) {
 
                 continue;
@@ -125,7 +139,8 @@ int induceL_0(char* T, int* SA, int* bkt, int len, bool erase)
             /* now it's a L type */
             char c = CHAR_VAL(T[j]);
             int pos = bkt[c];
-            SA[pos] = j;
+            // SA[pos] = j;
+            set_SA(SA, pos, j);
             bkt[c]++;
             if (erase) {
                 /* erase the previous one */
@@ -133,7 +148,8 @@ int induceL_0(char* T, int* SA, int* bkt, int len, bool erase)
                     /* delimeters are all set at position
                      * don't move them.
                      */
-                    SA[i] = 0;
+                    // SA[i] = 0;
+                    set_SA(SA, i, 0);
                 }
             }
         }
@@ -143,9 +159,13 @@ int induceL_0(char* T, int* SA, int* bkt, int len, bool erase)
 int induceS_0(char* T, int* SA, int* bkt, int len, bool erase)
 {
     for (int i = len - 1; i >= 0; i--) {
-        if (SA[i] != 0) {
-            int prev = SA[i];
-            int j = SA[i] - 1;
+        int SA_i = get_SA(SA, i);
+        // if (SA[i] != 0) {
+        if(SA_i != 0){
+            // int prev = SA[i];
+            int prev = SA_i;
+            // int j = SA[i] - 1;
+            int j = SA_i - 1;
             if (!IS_S(T[j])) {
                 continue;
             }
@@ -157,11 +177,13 @@ int induceS_0(char* T, int* SA, int* bkt, int len, bool erase)
              */
             if (c != 1) {
                 int pos = bkt[c];
-                SA[pos] = j;
+                // SA[pos] = j;
+                set_SA(SA, pos, j);
                 bkt[c]--;
             }
             if (erase) {
-                SA[i] = 0;
+                // SA[i] = 0;
+                set_SA(SA, i, 0);
             }
         }
     }
@@ -175,15 +197,19 @@ int compactLMS_0(int* SA, char* T, int len)
 
     int pos = 0;
     for (int i = 0; i < len; i++) {
-        if (SA[i] != 0) {
+        int SA_i = get_SA(SA, i);
+        // if (SA[i] != 0) {
+        if(SA_i != 0){
             /* it's LMS */
-            SA[pos] = SA[i];
+            // SA[pos] = SA[i];
+            set_SA(SA, pos, SA_i);
             pos++;
         }
     }
 
     for (int i = pos; i < len; i++) {
-        SA[i] = EMPTY;
+        // SA[i] = EMPTY;
+        set_SA(SA, i, EMPTY);
     }
 
     return pos;
@@ -223,22 +249,27 @@ int renameLMS_0(char* T, int* SA, int T1_len, int T_len)
 {
     int name;
     int namecnt = 0;
-    int* start = SA + T1_len;
+    // int* start = SA + T1_len;
+    int start = T1_len;
     /* first every del got it's own name */
     /* DELS CANT BE BACK TO BACK, otherwise
      * start[pos / 2] will be the same. And
      * EVERY THING GOES TO HELL.
      */
     for (int i = 0; i < del_size; i++) {
-        int pos = SA[i];
+        // int pos = SA[i];
+        int pos = get_SA(SA, i);
         name = i;
-        start[pos / 2] = name;
-        SA[i] = 1;
+        // start[pos / 2] = name;
+        set_SA(SA, pos / 2 + start, name);
+        // SA[i] = 1;
+        set_SA(SA, i, 1);
         namecnt++;
     }
 
     int prev, now, prev_len;
-    prev = SA[del_size - 1];
+    // prev = SA[del_size - 1];
+    prev = get_SA(SA, del_size - 1);
     prev_len = lms_len_0(T, prev, T_len);
     /* Now set up all the other LMS 
      * We only have at most len / 2 LMS
@@ -247,21 +278,29 @@ int renameLMS_0(char* T, int* SA, int T1_len, int T_len)
      */
     for (int i = del_size; i < T1_len; i++) {
         bool same = false;
-        now = SA[i];
+        // now = SA[i];
+        now = get_SA(SA, i);
         int now_len = lms_len_0(T, now, T_len);
         if (now_len == prev_len) {
             same = cmp_lms_0(T, prev, now, now_len);
         }
 
         if (same) {
-            int pos = SA[i];
-            SA[name]++;
-            start[pos / 2] = name;
+            // int pos = SA[i];
+            int pos = now;
+            // SA[name]++;
+            int tmp = get_SA(SA, name);
+            set_SA(SA, name, tmp+1);
+            // start[pos / 2] = name;
+            set_SA(SA, pos / 2 + start, name);
         } else {
-            int pos = SA[i];
+            // int pos = SA[i];
+            int pos = now;
             name = i;
-            SA[name] = 1;
-            start[pos / 2] = name;
+            // SA[name] = 1;
+            set_SA(SA, name, 1);
+            // start[pos / 2] = name;
+            set_SA(SA, pos / 2 + start, name);
             namecnt++;
             prev = now;
             prev_len = now_len;
@@ -303,9 +342,12 @@ void rename_s(int *SA, int T_len, int T1_len){
 
 int retrive0(char* T, int* SA, int* bkt, int len, int T1_len)
 {
-    int* last = SA + len - 1;
+    // int* last = SA + len - 1;
+    int last = len - 1;
     /* we assume the last one is always del */
-    *last = len - 1;
+    // *last = len - 1;
+    // last--;
+    set_SA(SA, last, len - 1);
     last--;
 
     /* we already got the last del, i+1 start from the one
@@ -314,7 +356,8 @@ int retrive0(char* T, int* SA, int* bkt, int len, int T1_len)
     for (int i = len - 3; i >= 0; i--) {
         if (!IS_S(T[i]) && IS_S(T[i + 1])) {
             /* T[i + 1] is a LMS */
-            *last = i + 1;
+            // *last = i + 1;
+            set_SA(SA, last, i + 1);
             last--;
         }
     }
@@ -326,11 +369,14 @@ int retrive0(char* T, int* SA, int* bkt, int len, int T1_len)
      * of T1
      */
     for (int i = 0; i < T1_len; i++) {
-        int pos = SA[i];
-        SA[i] = last[pos];
+        // int pos = SA[i];
+        int pos = get_SA(SA, i);
+        // SA[i] = last[pos];
+        set_SA(SA, i + last, pos);
     }
     for (int i = T1_len; i < len; i++) {
-        SA[i] = 0;
+        // SA[i] = 0;
+        set_SA(SA, i, 0);
     }
 
     /* Now SA at its sorted compact version
@@ -338,12 +384,15 @@ int retrive0(char* T, int* SA, int* bkt, int len, int T1_len)
      * base on the bkt.
      */
     for (int i = T1_len - 1; i >= del_size; i--) {
-        char c = CHAR_VAL(T[SA[i]]);
-        int tmp = SA[i];
-        SA[i] = 0;
+        int SA_i = get_SA(SA, i);
+        char c = CHAR_VAL(T[SA_i]);
+        int tmp = SA_i;
+        // SA[i] = 0;
+        set_SA(SA, i, 0);
         int pos = bkt[c];
         bkt[c]--;
-        SA[pos] = tmp;
+        // SA[pos] = tmp;
+        set_SA(SA, pos, tmp);
     }
 }
 

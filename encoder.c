@@ -12,7 +12,6 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
     /* touch memory very carefully */
     char* T = malloc(sizeof(char) * len);
     fread(T, sizeof(char), sizeof(char) * len, f);
-    fclose(f);
 
     /* modify the data to suit the algo */
     char prev = 0;
@@ -32,12 +31,23 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
         }
     }
 
+    int tmp_len = len;
+    int trailing_del = 0;
+    while(T[tmp_len - 1] == 2){
+        tmp_len--;
+        trailing_del++;
+    }
+
     int* SA = malloc(sizeof(int) * len);
     memset(SA, 0, sizeof(int) * len);
     int* bkt = malloc(sizeof(int) * BKTSIZE);
     memset(bkt, 0, sizeof(int) * BKTSIZE);
 
-    int del_size = level0_main(T, SA, bkt, len, delimeter);
+    int del_size = level0_main(T, SA, bkt, tmp_len, delimeter);
+
+    fseek(f, 0, SEEK_SET);
+    fread(T, sizeof(char), sizeof(char) * len, f);
+    fclose(f);
 
     /* NOW SA IS SORTED */
     /* since all real records delimeters are in bkt 1 and 
@@ -48,18 +58,22 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
      * same property as the old one.
      */
     int pos = 0;
-    for (int i = len - 1; i >= 0; i--) {
-        if (abs(T[i]) == 1 || abs(T[i]) == 2) {
+    for (int i = tmp_len - 1; i >= 0; i--) {
+        if (T[i] == delimeter) {
             SA[pos] = i;
             pos++;
         }
     }
+
 
     /* With this proper SA, we can construct a index file in O(n) time 
      * and this file would only contain n / 4 * 4bytes infor, so it would
      * not be bigger than the original one
      */
 
+    f = fopen(output, "w+");
+    printf("traling is %d\n", trailing_del);
+    fwrite(T + tmp_len, sizeof(char), trailing_del, f);
     
 
     /* construct BWT based on SA and modified T */
@@ -73,18 +87,13 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
         } else {
             c = abs(T[len - 1]);
         }
-        if (c == 1 || c == 2) {
-            c = delimeter;
-        }
         BWT[i] = c;
     }
 
 
     /* free SA and bkt */
     free(bkt);
-
-    f = fopen(output, "w");
-    fwrite(BWT, sizeof(char), len, f);
+    fwrite(BWT, sizeof(char), tmp_len, f);
     fclose(f);
     free(SA);
     free(T);
@@ -111,6 +120,7 @@ int main(int argc, char const* argv[])
     char* aux_file = malloc(strlen(output_file) + 5);
     strcpy(aux_file, output_file);
     snprintf(aux_file, 5, ".aux");
+
     char* BWT = encode(encode_file, output_file, aux_file,delimeter);
 
     return 0;
