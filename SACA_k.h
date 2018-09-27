@@ -32,6 +32,9 @@
  */
 #define BKTSIZE 128
 
+#define MEM_MAX (48 * 1024 * 1024)
+// #define MEM_MAX (19 * 1024 * 1024)
+
 
 enum DIRECTION {
     START,
@@ -64,7 +67,7 @@ void print_SA(int* SA, int len);
  * the construction, the suffix array should also be slightly
  * modified to suit the real case.
  */
-int level0_main(char *T, int *SA, int *bkt, int len, char del);
+int level0_main(char *T, int *bkt, int len, char del);
 
 int set_lms_0(char* T, int len);
 void gen_bkt(char* T, int* bkt, int len, enum DIRECTION dir);

@@ -38,17 +38,22 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
         trailing_del++;
     }
 
-    int* SA = malloc(sizeof(int) * len);
-    memset(SA, 0, sizeof(int) * len);
     int* bkt = malloc(sizeof(int) * BKTSIZE);
     memset(bkt, 0, sizeof(int) * BKTSIZE);
 
-    int del_size = level0_main(T, SA, bkt, tmp_len, delimeter);
 
+    int del_size = level0_main(T, bkt, tmp_len, delimeter);
+
+    T = malloc(sizeof(char) * len);
     fseek(f, 0, SEEK_SET);
     fread(T, sizeof(char), sizeof(char) * len, f);
     fclose(f);
 
+    int* SA = malloc(sizeof(int) * len);
+    memset(SA, 0, sizeof(int) * len);
+
+    FILE *SA_FILE = fopen("ext", "r");
+    fread(SA, sizeof(int), tmp_len, SA_FILE);
     /* NOW SA IS SORTED */
     /* since all real records delimeters are in bkt 1 and 
      * empty records in bkt 2(which we don't care). And all

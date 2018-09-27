@@ -10,19 +10,46 @@
 
 int del_size = 0;
 
-void print_SA(int *SA, int len){
-    for(int i = 0;i < len;i++){
-        printf("%d ", SA[i]);
-    }
+FILE *SA_FILE;
+FILE *T_FILE;
+
+
+static void dump_file(int *SA, int len){
+    fseek(SA_FILE, 0, SEEK_SET);
+    fwrite(SA, sizeof(int), len, SA_FILE);
 }
 
 static int get_SA(int *SA, int index){
-    return SA[index];
+    if(index < MEM_MAX){
+        return SA[index];
+    }
+    else{
+        fseek(SA_FILE, index * sizeof(int), SEEK_SET);
+        int tmp;
+        fread(&tmp, sizeof(int), 1, SA_FILE);
+        return tmp;
+    }
 }
 
-static int set_SA(int *SA, int index, int value){
-    SA[index] = value;
+static void set_SA(int *SA, int index, int value){
+    if(index < MEM_MAX){
+        SA[index] = value;
+    }
+    else{
+        fseek(SA_FILE, index * sizeof(int), SEEK_SET);
+        fwrite(&value, sizeof(int), 1, SA_FILE);
+    }
 }
+
+void print_SA(int *SA, int len){
+    for(int i = 0;i < len;i++){
+        printf("%d ", get_SA(SA, i));
+    }
+    printf("\n");
+}
+
+
+
 
 /* We only use char less than 127, so the
  * highest bit of the input string char is
@@ -112,7 +139,6 @@ int place_lms_0(char* T, int* SA, int len, int* bkt)
             // SA[pos] = i + 1;
             set_SA(SA, pos, i + 1);
             bkt[c]--;
-
             cnt++;
         }
     }
@@ -398,7 +424,14 @@ int retrive0(char* T, int* SA, int* bkt, int len, int T1_len)
 }
 
 
-int level0_main(char *T, int *SA, int *bkt, int len, char del){
+int level0_main(char *T, int *bkt, int len, char del){
+
+    SA_FILE = fopen("ext", "w+");
+    T_FILE = fopen("ext2", "w+");
+
+    int *SA = malloc(sizeof(int) * MEM_MAX);
+    memset(SA, 0, sizeof(int) * MEM_MAX);
+
     set_lms_0(T, len);
 
     gen_bkt(T, bkt, len, END);
@@ -414,6 +447,18 @@ int level0_main(char *T, int *SA, int *bkt, int len, char del){
     int T1_len = compactLMS_0(SA, T, len);
 
     int name_size = renameLMS_0(T, SA, T1_len, len);
+
+    /* dump sa to file */
+    dump_file(SA, MEM_MAX);
+    free(SA);
+    /* dump T to file */
+    fwrite(T, sizeof(char), len, T_FILE);
+    free(T);
+
+    SA = malloc(sizeof(int) * len);
+    fseek(SA_FILE, 0, SEEK_SET);
+    fread(SA, sizeof(int), len, SA_FILE);
+
     move_name(SA, len, T1_len);
 
     int* T1 = SA + len - T1_len;
@@ -429,6 +474,19 @@ int level0_main(char *T, int *SA, int *bkt, int len, char del){
             SA[pos] = i;
         }
     }
+
+    /* dump SA to file */
+    dump_file(SA, len);
+    free(SA);
+
+    fseek(T_FILE, 0, SEEK_SET);
+    T = malloc(sizeof(char) * len);
+    fread(T, sizeof(char), len, T_FILE);
+
+    SA = malloc(sizeof(int) * MEM_MAX);
+    fseek(SA_FILE, 0, SEEK_SET);
+    fread(SA, sizeof(int), MEM_MAX, SA_FILE);
+
     /* NOW LMS IS SORTED */
     /* SET LMS AT IT'S POSITION */
     gen_bkt(T, bkt, len, END);
@@ -439,5 +497,11 @@ int level0_main(char *T, int *SA, int *bkt, int len, char del){
 
     gen_bkt(T, bkt, len, END);
     induceS_0(T, SA, bkt, len, false);
+
+    dump_file(SA, MEM_MAX);
+    free(SA);
+    free(T);
+    fclose(SA_FILE);
+    fclose(T_FILE);
     return del_size;
 }
