@@ -372,7 +372,8 @@ int retrive0(char* T, int* SA, int* bkt, int len, int T1_len)
         // int pos = SA[i];
         int pos = get_SA(SA, i);
         // SA[i] = last[pos];
-        set_SA(SA, i + last, pos);
+        int last_pos = get_SA(SA, last + pos);
+        set_SA(SA, i, last_pos);
     }
     for (int i = T1_len; i < len; i++) {
         // SA[i] = 0;
