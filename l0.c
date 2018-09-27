@@ -9,6 +9,14 @@
 
 int del_size = 0;
 
+static int get_SA(int *SA, int index){
+    return SA[index];
+}
+
+static int set_SA(int *SA, int index, int value){
+    SA[index] = value;
+}
+
 /* We only use char less than 127, so the
  * highest bit of the input string char is
  * used to indicate the S/L type.
@@ -259,7 +267,11 @@ int renameLMS_0(char* T, int* SA, int T1_len, int T_len)
             prev_len = now_len;
         }
     }
+    return namecnt;
+}
 
+void move_name(int *SA, int T_len, int T1_len){
+    int* start = SA + T1_len;
     /* move all names to the back of SA */
     int pos = T_len - T1_len - 1;
     for (int i = T_len - T1_len - 1; i >= 0; i--) {
@@ -271,12 +283,9 @@ int renameLMS_0(char* T, int* SA, int T1_len, int T_len)
         }
     }
 
+}
 
-    if (namecnt == T1_len) {
-        /* all unique names */
-        return namecnt;
-    }
-
+void rename_s(int *SA, int T_len, int T1_len){
     /* set LMS for next level */
     int* T1 = SA + T_len - T1_len;
     set_lms_1(T1, T1_len);
@@ -290,8 +299,6 @@ int renameLMS_0(char* T, int* SA, int T1_len, int T_len)
             SET_S(T1[i]);
         }
     }
-
-    return namecnt;
 }
 
 int retrive0(char* T, int* SA, int* bkt, int len, int T1_len)
@@ -357,8 +364,11 @@ int level0_main(char *T, int *SA, int *bkt, int len, char del){
     int T1_len = compactLMS_0(SA, T, len);
 
     int name_size = renameLMS_0(T, SA, T1_len, len);
+    move_name(SA, len, T1_len);
+
     int* T1 = SA + len - T1_len;
     if (name_size < T1_len) {
+        rename_s(SA, len, T1_len);
         /* need recursive */
         printf("need recursive name size is %d\n", name_size);
         level1_main(T1, SA, T1_len);
