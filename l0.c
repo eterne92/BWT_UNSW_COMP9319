@@ -13,6 +13,10 @@ int del_size = 0;
 FILE *SA_FILE;
 FILE *T_FILE;
 
+void setup_files(FILE *s, FILE *t){
+    SA_FILE = s;
+    T_FILE = t;
+}
 
 static void dump_file(int *SA, int len){
     fseek(SA_FILE, 0, SEEK_SET);
@@ -426,8 +430,6 @@ int retrive0(char* T, int* SA, int* bkt, int len, int T1_len)
 
 int level0_main(char *T, int *bkt, int len, char del){
 
-    SA_FILE = fopen("ext", "w+");
-    T_FILE = fopen("ext2", "w+");
 
     int *SA = malloc(sizeof(int) * MEM_MAX);
     memset(SA, 0, sizeof(int) * MEM_MAX);
@@ -501,7 +503,5 @@ int level0_main(char *T, int *bkt, int len, char del){
     dump_file(SA, MEM_MAX);
     free(SA);
     free(T);
-    fclose(SA_FILE);
-    fclose(T_FILE);
     return del_size;
 }

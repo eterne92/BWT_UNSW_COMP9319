@@ -13,6 +13,11 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
     char* T = malloc(sizeof(char) * len);
     fread(T, sizeof(char), sizeof(char) * len, f);
 
+    FILE *SA_FILE = fopen("ext", "w+");
+    FILE *T_FILE = fopen("ext2", "w+");
+
+    setup_files(SA_FILE, T_FILE);
+
     /* modify the data to suit the algo */
     char prev = 0;
     for (int i = 0; i < len; i++) {
@@ -43,6 +48,7 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
 
 
     int del_size = level0_main(T, bkt, tmp_len, delimeter);
+    printf("%d is del_size\n", del_size);
 
     T = malloc(sizeof(char) * len);
     fseek(f, 0, SEEK_SET);
@@ -51,7 +57,7 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
 
     int* SA = malloc(sizeof(int) * (tmp_len / 2 + 1));
 
-    FILE *SA_FILE = fopen("ext", "r");
+    fseek(SA_FILE, 0, SEEK_SET);
     fread(SA, sizeof(int), tmp_len / 2, SA_FILE);
     /* NOW SA IS SORTED */
     /* since all real records delimeters are in bkt 1 and 
@@ -111,12 +117,107 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
     }
 
 
-    /* free SA and bkt */
+    free(T);
     free(bkt);
+
     fwrite(BWT, sizeof(char), tmp_len, f);
     fclose(f);
+
+    /* make aux file */
+    f = fopen(aux_file, "w+");
+    fseek(f, trailing_del * sizeof(int), SEEK_SET);
+    int *AUX = malloc(sizeof(int) * del_size);
+
+    fseek(SA_FILE, 0, SEEK_SET);
+    fread(SA, sizeof(int), tmp_len / 2, SA_FILE);
+
+    pos = 0;
+    for(i = 0;i < tmp_len / 2;i++){
+        if(BWT[i] == delimeter){
+            int tmp = SA[i] - 1;
+            AUX[pos] = tmp < 0 ? tmp_len - 1 : tmp;
+            pos++;
+        }
+    }
+
+    fread(SA, sizeof(int), tmp_len - tmp_len / 2, SA_FILE);
+    for(;i < tmp_len;i++){
+        if(BWT[i] == delimeter){
+            int tmp = SA[i - tmp_len / 2] - 1;
+            AUX[pos] = tmp < 0 ? tmp_len - 1 : tmp;
+            pos++;
+        }
+    }
+
+
+    /* now AUX contain all the delimeter position, no need for SA and BWT */
+    free(BWT);
+    /* now there is at most 3n memory in use 
+     * SA 2n, AUX n.
+     */
+    memset(SA, 0, (tmp_len / 2) * sizeof(int));
+    /* get the delimeter positions from back to front */
+    int *del_pos = malloc(sizeof(int) * del_size);
+    fseek(SA_FILE, 0, SEEK_SET);
+    fread(del_pos, sizeof(int), del_size, SA_FILE);
+
+
+
+    for(int i = del_size - 1;i >= 0;i--){
+        if(del_pos[i] >= tmp_len / 2){
+            break;
+        }
+        int tmp = del_pos[i];
+        SA[tmp] = i;
+    }
+
+    fseek(SA_FILE, 0, SEEK_SET);
+    fwrite(SA, sizeof(int), tmp_len / 2, SA_FILE);
+
+    memset(SA, 0, (tmp_len / 2 + 1) * sizeof(int));
+
+    for(int i = 0;i < del_size;i++){
+        if(del_pos[i] < tmp_len / 2){
+            break;
+        }
+        int tmp = del_pos[i];
+        SA[tmp - tmp_len / 2] = i;
+    }
+
+
+    fwrite(SA, sizeof(int), tmp_len / 2 + 1, SA_FILE);
+
+    fseek(SA_FILE, 0, SEEK_SET);
+    
+    memset(del_pos, 0, sizeof(int) * del_size);
+
+    for(int i = 0;i < del_size;i++){
+        int index = AUX[i];
+        if(index >= tmp_len / 2){
+            int tmp = index - tmp_len / 2;
+            del_pos[SA[tmp]] = index;
+        }
+    }
+
+    fseek(SA_FILE, 0, SEEK_SET);
+    fread(SA, sizeof(int), tmp_len / 2, SA_FILE);
+
+    for(int i = 0;i < del_size;i++){
+        int index = AUX[i];
+        if(index < tmp_len / 2){
+            del_pos[SA[index]] = index;
+        }
+    }
+
+
+    fwrite(del_pos, sizeof(int), del_size, f);
+    fclose(f);
+
+
+    /* free SA and bkt */
+    free(del_pos);
     free(SA);
-    free(T);
+    free(AUX);
 }
 
 int main(int argc, char const* argv[])
@@ -139,7 +240,7 @@ int main(int argc, char const* argv[])
 
     char* aux_file = malloc(strlen(output_file) + 5);
     strcpy(aux_file, output_file);
-    snprintf(aux_file, 5, ".aux");
+    strcat(aux_file, ".aux");
 
     char* BWT = encode(encode_file, output_file, aux_file,delimeter);
 

@@ -70,6 +70,7 @@ void print_SA(int* SA, int len);
  */
 int level0_main(char *T, int *bkt, int len, char del);
 
+void setup_files(FILE *s, FILE *t);
 int set_lms_0(char* T, int len);
 void gen_bkt(char* T, int* bkt, int len, enum DIRECTION dir);
 int place_lms_0(char* T, int* SA, int len, int* bkt);
