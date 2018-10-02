@@ -138,7 +138,7 @@ int level1_main(int* T, int* SA, int len)
 
     if(name_size < T1_len){
         /* need recursive */
-        // printf("need recursive name size is %d\n", name_size);
+        printf("need recursive name size is %d\n", name_size);
         level1_main(T1, SA, T1_len);
     }
     else{
@@ -408,8 +408,9 @@ int renameLMS_1(int* T, int* SA, int T1_len, int T_len)
     int pos = T_len - T1_len - 1;
     for (int i = T_len - T1_len - 1; i >= 0; i--) {
         if (start[i] != EMPTY) {
-            start[pos] = start[i];
+            int tmp = start[i];
             start[i] = EMPTY;
+            start[pos] = tmp;
             pos--;
             cnt++;
         }

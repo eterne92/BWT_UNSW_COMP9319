@@ -19,6 +19,7 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
     setup_files(SA_FILE, T_FILE);
 
     /* modify the data to suit the algo */
+    printf("%d is delimeter\n", delimeter);
     char prev = 0;
     for (int i = 0; i < len; i++) {
         /* all delimeters that indicates the EMPTY record is changed to 2
@@ -75,6 +76,18 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
         }
     }
 
+    fseek(SA_FILE, 0, SEEK_SET);
+    fwrite(SA, sizeof(int), tmp_len / 2, SA_FILE);
+
+    // fseek(SA_FILE, 0, SEEK_SET);
+    // for(int i = 0;i < tmp_len;i++){
+    //     int tmp;
+    //     fread(&tmp, sizeof(int), 1, SA_FILE);
+    //     printf("%d ", tmp);
+    // }
+    // printf("\n");
+    fseek(SA_FILE, 0, SEEK_SET);
+    fread(SA, sizeof(int), tmp_len / 2, SA_FILE);
 
     /* With this proper SA, we can construct a index file in O(n) time 
      * and this file would only contain n / 4 * 4bytes infor, so it would
@@ -101,6 +114,7 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
         }
         BWT[i] = c;
     }
+    printf("half %d\n", i);
 
     fread(SA, sizeof(int), tmp_len - tmp_len / 2, SA_FILE);
 
@@ -115,6 +129,7 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
         }
         BWT[i] = c;
     }
+    printf("full %d\n", i);
 
 
     free(T);
@@ -188,14 +203,27 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
     fwrite(SA, sizeof(int), tmp_len / 2 + 1, SA_FILE);
 
     fseek(SA_FILE, 0, SEEK_SET);
+    // for(int i = 0;i < tmp_len;i++){
+    //     int tmp;
+    //     fread(&tmp, sizeof(int), 1, SA_FILE);
+    //     printf("%d ", tmp);
+    // }
+    // printf("\n");
     
     memset(del_pos, 0, sizeof(int) * del_size);
+
+    // for(int i = 0;i < del_size;i++){
+    //     printf("%d ", AUX[i]);
+    // }
+    // printf("\n");
 
     for(int i = 0;i < del_size;i++){
         int index = AUX[i];
         if(index >= tmp_len / 2){
             int tmp = index - tmp_len / 2;
-            del_pos[SA[tmp]] = index;
+            // printf(" i = %d SA[%d] = %d\n",i, index, SA[tmp]);
+            // del_pos[SA[tmp]] = i - 1 >= 0 ? i - 1 : del_size - 1;
+            del_pos[i] = SA[tmp] - 1 < 0 ? del_size - 1 : SA[tmp] - 1;
         }
     }
 
@@ -205,10 +233,16 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
     for(int i = 0;i < del_size;i++){
         int index = AUX[i];
         if(index < tmp_len / 2){
-            del_pos[SA[index]] = index;
+            // printf(" i = %d SA[%d] = %d\n",i, index, SA[index]);
+            // del_pos[SA[index]] = i - 1 >= 0 ? i - 1 : del_size - 1;
+            del_pos[i] = SA[index] - 1 < 0 ? del_size - 1 : SA[index] - 1;
         }
     }
 
+    // for(int i = 0;i < del_size;i++){
+    //     printf("%d ", del_pos[i]);
+    // }
+    // printf("\n");
 
     fwrite(del_pos, sizeof(int), del_size, f);
     fclose(f);

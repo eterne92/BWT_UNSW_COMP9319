@@ -429,8 +429,6 @@ int retrive0(char* T, int* SA, int* bkt, int len, int T1_len)
 
 
 int level0_main(char *T, int *bkt, int len, char del){
-
-
     int *SA = malloc(sizeof(int) * MEM_MAX);
     memset(SA, 0, sizeof(int) * MEM_MAX);
 
