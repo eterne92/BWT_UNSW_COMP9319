@@ -353,7 +353,7 @@ static int lms_len_0(int* T, int lms, int len)
     while (i < len && CHAR_VAL(T[i]) > CHAR_VAL(T[i + 1])) {
         i++;
     }
-    return i - lms;
+    return i - lms + 1;
 }
 
 static bool cmp_lms_0(int* T, int prev_lms, int now_lms, int lms_len)

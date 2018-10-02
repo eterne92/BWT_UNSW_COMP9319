@@ -261,7 +261,7 @@ static int lms_len_0(char* T, int lms, int len)
     while (i < len && CHAR_VAL(T[i]) > CHAR_VAL(T[i + 1])) {
         i++;
     }
-    return i - lms;
+    return i - lms + 1;
 }
 
 static bool cmp_lms_0(char* T, int prev_lms, int now_lms, int lms_len)
@@ -307,6 +307,7 @@ int renameLMS_0(char* T, int* SA, int T1_len, int T_len)
      * So start[pos / 2] should be unique
      */
     for (int i = del_size; i < T1_len; i++) {
+        printf("%d with lms len as %d\n", prev, prev_len);
         bool same = false;
         // now = SA[i];
         now = get_SA(SA, i);
@@ -393,6 +394,8 @@ int retrive0(char* T, int* SA, int* bkt, int len, int T1_len)
     }
     last++;
 
+    print_SA(SA, len);
+
     /* Now T1 got it's real name back 
      * set SA to retrive the name, each
      * SA element point to the position
@@ -409,6 +412,7 @@ int retrive0(char* T, int* SA, int* bkt, int len, int T1_len)
         // SA[i] = 0;
         set_SA(SA, i, 0);
     }
+    print_SA(SA, len);
 
     /* Now SA at its sorted compact version
      * put all LMS at it's correct position
@@ -443,10 +447,14 @@ int level0_main(char *T, int *bkt, int len, char del){
     gen_bkt(T, bkt, len, END);
     induceS_0(T, SA, bkt, len, true);
 
+    print_SA(SA, len);
+
     /* ONLY LMS LEFT IN SA NOW */
     int T1_len = compactLMS_0(SA, T, len);
+    print_SA(SA, len);
 
     int name_size = renameLMS_0(T, SA, T1_len, len);
+    print_SA(SA, len);
 
     /* dump sa to file */
     dump_file(SA, MEM_MAX);
@@ -460,6 +468,7 @@ int level0_main(char *T, int *bkt, int len, char del){
     fread(SA, sizeof(int), len, SA_FILE);
 
     move_name(SA, len, T1_len);
+    print_SA(SA, len);
 
     int* T1 = SA + len - T1_len;
     if (name_size < T1_len) {
@@ -492,11 +501,17 @@ int level0_main(char *T, int *bkt, int len, char del){
     gen_bkt(T, bkt, len, END);
     retrive0(T, SA, bkt, len, T1_len);
 
+    print_SA(SA, len);
+
     gen_bkt(T, bkt, len, START);
     induceL_0(T, SA, bkt, len, false);
 
+    print_SA(SA, len);
+
     gen_bkt(T, bkt, len, END);
     induceS_0(T, SA, bkt, len, false);
+
+    print_SA(SA, len);
 
     dump_file(SA, MEM_MAX);
     free(SA);
