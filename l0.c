@@ -47,7 +47,13 @@ static void set_SA(int *SA, int index, int value){
 
 void print_SA(int *SA, int len){
     for(int i = 0;i < len;i++){
-        printf("%d ", get_SA(SA, i));
+        int tmp = get_SA(SA, i);
+        if(tmp == EMPTY){
+            printf("^ ");
+        }
+        else{
+            printf("%d ", tmp);
+        }
     }
     printf("\n");
 }
@@ -246,33 +252,30 @@ int compactLMS_0(int* SA, char* T, int len)
 }
 
 
-static int lms_len_0(char* T, int lms, int len)
-{
-    if (lms == len - 1) {
-        /* we are the last char */
-        return 1;
-    }
-    /* got over all the s_type */
-    int i = lms;
-    while (CHAR_VAL(T[i]) <= CHAR_VAL(T[i + 1])) {
-        i++;
-    }
-    /* now i is L_type */
-    while (i < len && CHAR_VAL(T[i]) > CHAR_VAL(T[i + 1])) {
-        i++;
-    }
-    return i - lms + 1;
-}
 
-static bool cmp_lms_0(char* T, int prev_lms, int now_lms, int lms_len)
+static bool cmp_lms_0(char* T, int prev_lms, int now_lms, int len)
 {
-    for (int i = 0; i < lms_len; i++) {
-        /* we don't need to convert val cos they should have the same type */
-        if (T[prev_lms + i] != T[now_lms + i]) {
+    int i1 = prev_lms;
+    int i2 = now_lms;
+    while(i1 < len && i2 < len){
+        if(T[i1] != T[i2]){
             return false;
         }
+        i1++;
+        i2++;
+        if(i1 == len || i2 == len){
+            return false;
+        }
+        if(IS_S(T[i1]) && !IS_S(T[i1 - 1])){
+            /* i1 is LMS */
+            return T[i1] == T[i2];
+        }
+        if(IS_S(T[i2]) && !IS_S(T[i2 - 1])){
+            /* i2 is LMS */
+            return T[i1] == T[i2];
+        }
     }
-    return true;
+    return false;
 }
 
 int renameLMS_0(char* T, int* SA, int T1_len, int T_len)
@@ -300,22 +303,16 @@ int renameLMS_0(char* T, int* SA, int T1_len, int T_len)
     int prev, now, prev_len;
     // prev = SA[del_size - 1];
     prev = get_SA(SA, del_size - 1);
-    prev_len = lms_len_0(T, prev, T_len);
     /* Now set up all the other LMS 
      * We only have at most len / 2 LMS
      * and LMS can't be back to back
      * So start[pos / 2] should be unique
      */
     for (int i = del_size; i < T1_len; i++) {
-        printf("%d with lms len as %d\n", prev, prev_len);
         bool same = false;
         // now = SA[i];
         now = get_SA(SA, i);
-        int now_len = lms_len_0(T, now, T_len);
-        if (now_len == prev_len) {
-            same = cmp_lms_0(T, prev, now, now_len);
-        }
-
+        same = cmp_lms_0(T, prev, now, T_len);
         if (same) {
             // int pos = SA[i];
             int pos = now;
@@ -334,7 +331,6 @@ int renameLMS_0(char* T, int* SA, int T1_len, int T_len)
             set_SA(SA, pos / 2 + start, name);
             namecnt++;
             prev = now;
-            prev_len = now_len;
         }
     }
     return namecnt;
@@ -394,7 +390,7 @@ int retrive0(char* T, int* SA, int* bkt, int len, int T1_len)
     }
     last++;
 
-    print_SA(SA, len);
+    // print_SA(SA, len);
 
     /* Now T1 got it's real name back 
      * set SA to retrive the name, each
@@ -412,7 +408,7 @@ int retrive0(char* T, int* SA, int* bkt, int len, int T1_len)
         // SA[i] = 0;
         set_SA(SA, i, 0);
     }
-    print_SA(SA, len);
+    // print_SA(SA, len);
 
     /* Now SA at its sorted compact version
      * put all LMS at it's correct position
@@ -440,6 +436,7 @@ int level0_main(char *T, int *bkt, int len, char del){
 
     gen_bkt(T, bkt, len, END);
     place_lms_0(T, SA, len, bkt);
+    // print_SA(SA, len);
 
     gen_bkt(T, bkt, len, START);
     induceL_0(T, SA, bkt, len, true);
@@ -447,14 +444,14 @@ int level0_main(char *T, int *bkt, int len, char del){
     gen_bkt(T, bkt, len, END);
     induceS_0(T, SA, bkt, len, true);
 
-    print_SA(SA, len);
+    // print_SA(SA, len);
 
     /* ONLY LMS LEFT IN SA NOW */
     int T1_len = compactLMS_0(SA, T, len);
-    print_SA(SA, len);
+    // print_SA(SA, len);
 
     int name_size = renameLMS_0(T, SA, T1_len, len);
-    print_SA(SA, len);
+    // print_SA(SA, len);
 
     /* dump sa to file */
     dump_file(SA, MEM_MAX);
@@ -468,7 +465,7 @@ int level0_main(char *T, int *bkt, int len, char del){
     fread(SA, sizeof(int), len, SA_FILE);
 
     move_name(SA, len, T1_len);
-    print_SA(SA, len);
+    // print_SA(SA, len);
 
     int* T1 = SA + len - T1_len;
     if (name_size < T1_len) {
@@ -501,17 +498,17 @@ int level0_main(char *T, int *bkt, int len, char del){
     gen_bkt(T, bkt, len, END);
     retrive0(T, SA, bkt, len, T1_len);
 
-    print_SA(SA, len);
+    // print_SA(SA, len);
 
     gen_bkt(T, bkt, len, START);
     induceL_0(T, SA, bkt, len, false);
 
-    print_SA(SA, len);
+    // print_SA(SA, len);
 
     gen_bkt(T, bkt, len, END);
     induceS_0(T, SA, bkt, len, false);
 
-    print_SA(SA, len);
+    // print_SA(SA, len);
 
     dump_file(SA, MEM_MAX);
     free(SA);

@@ -221,7 +221,7 @@ int induceL_1(int* T, int* SA, int len, bool erase)
         int prev = SA[i];
         int j = prev - 1;
         /* we only induce L type */
-        if (IS_S(T[j])) {
+        if (j < 0 || IS_S(T[j])) {
             continue;
         }
         /* pos point to the start of bkt*/
@@ -338,33 +338,29 @@ int compactLMS_1(int* SA, int* T, int len)
     return pos;
 }
 
-static int lms_len_0(int* T, int lms, int len)
+static bool cmp_lms_0(int* T, int prev_lms, int now_lms, int len)
 {
-    if (lms == len - 1) {
-        /* we are the last char */
-        return 1;
-    }
-    /* got over all the s_type */
-    int i = lms;
-    while (CHAR_VAL(T[i]) <= CHAR_VAL(T[i + 1])) {
-        i++;
-    }
-    /* now i is L_type */
-    while (i < len && CHAR_VAL(T[i]) > CHAR_VAL(T[i + 1])) {
-        i++;
-    }
-    return i - lms + 1;
-}
-
-static bool cmp_lms_0(int* T, int prev_lms, int now_lms, int lms_len)
-{
-    for (int i = 0; i < lms_len; i++) {
-        /* we don't need to convert val cos they should have the same type */
-        if (T[prev_lms + i] != T[now_lms + i]) {
+    int i1 = prev_lms;
+    int i2 = now_lms;
+    while(i1 < len && i2 < len){
+        if(T[i1] != T[i2]){
             return false;
         }
+        i1++;
+        i2++;
+        if(i1 == len || i2 == len){
+            return false;
+        }
+        if(IS_S(T[i1]) && !IS_S(T[i1 - 1])){
+            /* i1 is LMS */
+            return T[i1] == T[i2];
+        }
+        if(IS_S(T[i2]) && !IS_S(T[i2 - 1])){
+            /* i2 is LMS */
+            return T[i1] == T[i2];
+        }
     }
-    return true;
+    return false;
 }
 
 int renameLMS_1(int* T, int* SA, int T1_len, int T_len)
@@ -375,7 +371,6 @@ int renameLMS_1(int* T, int* SA, int T1_len, int T_len)
 
     int prev, now, prev_len;
     prev = SA[0];
-    prev_len = lms_len_0(T, prev, T_len);
     name = 0;
     start[SA[0] / 2] = name;
     SA[name] = 1;
@@ -383,10 +378,7 @@ int renameLMS_1(int* T, int* SA, int T1_len, int T_len)
     for (int i = 1; i < T1_len; i++) {
         bool same = false;
         now = SA[i];
-        int now_len = lms_len_0(T, now, T_len);
-        if (now_len == prev_len) {
-            same = cmp_lms_0(T, prev, now, now_len);
-        }
+        same = cmp_lms_0(T, prev, now, T_len);
 
         if (same) {
             int pos = SA[i];
@@ -399,7 +391,6 @@ int renameLMS_1(int* T, int* SA, int T1_len, int T_len)
             start[pos / 2] = name;
             namecnt++;
             prev = now;
-            prev_len = now_len;
         }
     }
 
