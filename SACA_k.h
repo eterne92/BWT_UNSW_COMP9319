@@ -32,7 +32,7 @@
  */
 #define BKTSIZE 128
 
-#define MEM_MAX (48 * 1024 * 1024)
+#define MEM_MAX (49 * 1024 * 1024)
 // #define MEM_MAX (19 * 1024 * 1024)
 // #define MEM_MAX 3
 

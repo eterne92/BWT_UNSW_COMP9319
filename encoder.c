@@ -44,9 +44,7 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
         trailing_del++;
     }
 
-    int* bkt = malloc(sizeof(int) * BKTSIZE);
-    memset(bkt, 0, sizeof(int) * BKTSIZE);
-
+	int bkt[129] = {0};
 
     int del_size = level0_main(T, bkt, tmp_len, delimeter);
     printf("%d is del_size\n", del_size);
@@ -133,7 +131,6 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
 
 
     free(T);
-    free(bkt);
 
     fwrite(BWT, sizeof(char), tmp_len, f);
     fclose(f);
