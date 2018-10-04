@@ -7,13 +7,13 @@
 
 using namespace std;
 
-#define BUFSIZE (13 * 1024 * 1024)
+#define BUFSIZE (2 * 1024 * 1024)
 #define BKTSIZE 128
 #define MASK (0xFFFFFE00)
 char delimeter;
 FILE *aux;
 int aux_size;
-FILE *tmp_file;
+int bwt_size;
 
 static int find_aux(int index) {
     fseek(aux, sizeof(int) * index, SEEK_SET);
@@ -27,7 +27,7 @@ int backSearch(const char *query);
 int makeOcc(char *occ_table, FILE *bwt_file, int *bkt);
 int getOcc(int n, char c, FILE *occ, FILE *bwt);
 
-int count(FILE *bwt, FILE *occ, const char *query, int *bkt, bool distinct);
+int count(FILE *bwt, FILE *occ, const char *query, int *bkt, bool distinct, bool output);
 int decode(FILE *bwt, FILE *occ, int index, int *bkt, bool output);
 int backward_search(FILE *bwt, FILE *occ, int index, int *bkt, int start, int end);
 
@@ -61,6 +61,8 @@ int main(int argc, char const *argv[]) {
     strcat(occ_table, "/occ");
 
     FILE *bwt_file = fopen(path, "r");
+    fseek(bwt_file, 0, SEEK_SET);
+    bwt_size = ftell(bwt_file);
 
     FILE *occ = fopen(occ_table, "r");
     int *bkt = (int *)malloc(sizeof(int) * (BKTSIZE + 1));
@@ -81,11 +83,15 @@ int main(int argc, char const *argv[]) {
     occ = fopen(occ_table, "r");
 
     if (strcmp(opt, "-m") == 0) {
-        int cnt = count(bwt_file, occ, query_string, bkt, true);
+        int cnt = count(bwt_file, occ, query_string, bkt, false, false);
         printf("%d\n", cnt);
     }
     else if(strcmp(opt, "-n") == 0){
-
+        int cnt = count(bwt_file, occ, query_string, bkt, true, false);
+        printf("%d\n", cnt);
+    }
+    else if(strcmp(opt, "-a") == 0){
+        int cnt = count(bwt_file, occ, query_string, bkt, true, true);
     }
 
     return 0;
@@ -99,7 +105,7 @@ int makeOcc(char *occ_table, FILE *bwt_file, int *bkt) {
 
     FILE *occ = fopen(occ_table, "w");
 
-    char *readbuf = (char *)malloc(sizeof(char) * BUFSIZE);
+    char readbuf[BUFSIZE];
     size_t readsize;
     while (true) {
         readsize = fread(readbuf, sizeof(char), BUFSIZE, bwt_file);
@@ -119,6 +125,7 @@ int makeOcc(char *occ_table, FILE *bwt_file, int *bkt) {
             break;
         }
     }
+
     fseek(bwt_file, 0, SEEK_SET);
     fclose(occ);
 }
@@ -137,19 +144,17 @@ int getOcc(int n, char c, FILE *occ, FILE *bwt) {
         offset = len;
     }
     // printf("offset is %d\n", offset);
-    int *bkt = (int *)malloc(sizeof(int) * BKTSIZE);
-    memset(bkt, 0, sizeof(int) * BKTSIZE);
+    int bkt[BKTSIZE] = {0};
     if (offset != 0) {
         int real_offset = offset - BKTSIZE * sizeof(int);
         fseek(occ, real_offset, SEEK_SET);
         fread(bkt, sizeof(int), BKTSIZE, occ);
     }
     ret = bkt[c];
-    free(bkt);
 
     /* now read the real bwt to find the accurate occ */
     offset = offset / (sizeof(int) * BKTSIZE) * 1024;
-    char *readbuf = (char *)malloc(sizeof(char) * 1024);
+    char readbuf[1024];
     fseek(bwt, offset, SEEK_SET);
     fread(readbuf, sizeof(char), 1024, bwt);
 
@@ -159,18 +164,17 @@ int getOcc(int n, char c, FILE *occ, FILE *bwt) {
         }
     }
 
-    free(readbuf);
     return ret;
 }
 
-int count(FILE *bwt, FILE *occ, const char *query, int *bkt, bool distinct) {
+int count(FILE *bwt, FILE *occ, const char *query, int *bkt, bool distinct, bool output) {
     int len = strlen(query);
     int start = bkt[query[len - 1]];
     int end = bkt[query[len - 1] + 1] - 1;
 
     for (int i = len - 2; i >= 0; i--) {
         start = getOcc(start, query[i], occ, bwt) + bkt[query[i]];
-        end = getOcc(end, query[i], occ, bwt) + bkt[query[i]] - 1;
+        end = getOcc(end + 1, query[i], occ, bwt) + bkt[query[i]] - 1;
         if (start > end) {
             return 0;
         }
@@ -180,12 +184,16 @@ int count(FILE *bwt, FILE *occ, const char *query, int *bkt, bool distinct) {
         return end - start + 1;
     }
 
-    unordered_set<int> index;
+    set<int> index;
 
     for (int i = start; i <= end; i++) {
         int j = backward_search(bwt, occ, i, bkt, start, end);
         if(j != -1)
             index.insert(j);
+    }
+
+    if(!output){
+        return index.size();
     }
 
     int rec = 0;
@@ -195,11 +203,11 @@ int count(FILE *bwt, FILE *occ, const char *query, int *bkt, bool distinct) {
         recs.insert(tmp);
     }
 
-    for (auto v : recs) {
-        decode(bwt, occ, v, bkt, true);
+    for (auto v:recs){
+        printf("%d\n", aux_size - v);
     }
 
-    return end - start + 1;
+    return recs.size();
 }
 
 int decode(FILE *bwt, FILE *occ, int index, int *bkt, bool output){
