@@ -2,19 +2,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
-char* encode(const char* filename, const char* output, const char *aux_file, char delimeter)
-{
-    FILE* f = fopen(filename, "r");
+void encode(const char *filename, const char *output, const char *aux_file,
+             const char *sa_file, const char *t_file, char delimeter) {
+    FILE *f = fopen(filename, "r");
     fseek(f, 0, SEEK_END);
     int len = ftell(f);
     fseek(f, 0, SEEK_SET);
     /* touch memory very carefully */
-    char* T = malloc(sizeof(char) * len);
+    char *T = malloc(sizeof(char) * len);
     fread(T, sizeof(char), sizeof(char) * len, f);
 
-    FILE *SA_FILE = fopen("ext", "w+");
-    FILE *T_FILE = fopen("ext2", "w+");
+    FILE *SA_FILE = fopen(sa_file, "w+");
+    FILE *T_FILE = fopen(t_file, "w+");
 
     setup_files(SA_FILE, T_FILE);
 
@@ -38,26 +39,26 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
 
     int tmp_len = len;
     int trailing_del = 0;
-    while(T[tmp_len - 1] == 2){
+    while (T[tmp_len - 1] == 2) {
         tmp_len--;
         trailing_del++;
     }
 
-	int bkt[129] = {0};
+    int bkt[129] = {0};
 
-    int del_size = level0_main(T, bkt, tmp_len, delimeter);
+    level0_main(T, bkt, tmp_len, delimeter);
 
     T = malloc(sizeof(char) * len);
     fseek(f, 0, SEEK_SET);
     fread(T, sizeof(char), sizeof(char) * len, f);
     fclose(f);
 
-    int* SA = malloc(sizeof(int) * (tmp_len / 2 + 1));
+    int *SA = malloc(sizeof(int) * (tmp_len / 2 + 1));
 
     fseek(SA_FILE, 0, SEEK_SET);
     fread(SA, sizeof(int), tmp_len / 2, SA_FILE);
     /* NOW SA IS SORTED */
-    /* since all real records delimeters are in bkt 1 and 
+    /* since all real records delimeters are in bkt 1 and
      * empty records in bkt 2(which we don't care). And all
      * delimeters in bkt 1 is sorted decrease by their position.
      * it's not hard to find that if we just put all the delimeters
@@ -72,28 +73,22 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
         }
     }
 
+    int del_size = pos;
+
     fseek(SA_FILE, 0, SEEK_SET);
     fwrite(SA, sizeof(int), tmp_len / 2, SA_FILE);
 
-    // fseek(SA_FILE, 0, SEEK_SET);
-    // for(int i = 0;i < tmp_len;i++){
-    //     int tmp;
-    //     fread(&tmp, sizeof(int), 1, SA_FILE);
-    //     printf("%d ", tmp);
-    // }
-    // printf("\n");
+
     fseek(SA_FILE, 0, SEEK_SET);
     fread(SA, sizeof(int), tmp_len / 2, SA_FILE);
 
-    /* With this proper SA, we can construct a index file in O(n) time 
+    /* With this proper SA, we can construct a index file in O(n) time
      * and this file would only contain n / 4 * 4bytes infor, so it would
      * not be bigger than the original one
      */
 
     f = fopen(output, "w+");
     fwrite(T + tmp_len, sizeof(char), trailing_del, f);
-
-    
 
     /* construct BWT based on SA and modified T */
     char *BWT = malloc(sizeof(char) * len);
@@ -112,7 +107,7 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
 
     fread(SA, sizeof(int), tmp_len - tmp_len / 2, SA_FILE);
 
-    for(;i < tmp_len;i++){
+    for (; i < tmp_len; i++) {
         char c;
         int index = i - tmp_len / 2;
         if (SA[index] > 0) {
@@ -123,7 +118,6 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
         }
         BWT[i] = c;
     }
-
 
     free(T);
 
@@ -139,8 +133,8 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
     fread(SA, sizeof(int), tmp_len / 2, SA_FILE);
 
     pos = 0;
-    for(i = 0;i < tmp_len / 2;i++){
-        if(BWT[i] == delimeter){
+    for (i = 0; i < tmp_len / 2; i++) {
+        if (BWT[i] == delimeter) {
             int tmp = SA[i] - 1;
             AUX[pos] = tmp < 0 ? tmp_len - 1 : tmp;
             pos++;
@@ -148,18 +142,17 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
     }
 
     fread(SA, sizeof(int), tmp_len - tmp_len / 2, SA_FILE);
-    for(;i < tmp_len;i++){
-        if(BWT[i] == delimeter){
+    for (; i < tmp_len; i++) {
+        if (BWT[i] == delimeter) {
             int tmp = SA[i - tmp_len / 2] - 1;
             AUX[pos] = tmp < 0 ? tmp_len - 1 : tmp;
             pos++;
         }
     }
 
-
     /* now AUX contain all the delimeter position, no need for SA and BWT */
     free(BWT);
-    /* now there is at most 3n memory in use 
+    /* now there is at most 3n memory in use
      * SA 2n, AUX n.
      */
     memset(SA, 0, (tmp_len / 2) * sizeof(int));
@@ -168,10 +161,8 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
     fseek(SA_FILE, 0, SEEK_SET);
     fread(del_pos, sizeof(int), del_size, SA_FILE);
 
-
-
-    for(int i = del_size - 1;i >= 0;i--){
-        if(del_pos[i] >= tmp_len / 2){
+    for (int i = del_size - 1; i >= 0; i--) {
+        if (del_pos[i] >= tmp_len / 2) {
             break;
         }
         int tmp = del_pos[i];
@@ -183,38 +174,24 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
 
     memset(SA, 0, (tmp_len / 2 + 1) * sizeof(int));
 
-    for(int i = 0;i < del_size;i++){
-        if(del_pos[i] < tmp_len / 2){
+    for (int i = 0; i < del_size; i++) {
+        if (del_pos[i] < tmp_len / 2) {
             break;
         }
         int tmp = del_pos[i];
         SA[tmp - tmp_len / 2] = i;
     }
 
-
     fwrite(SA, sizeof(int), tmp_len / 2 + 1, SA_FILE);
 
     fseek(SA_FILE, 0, SEEK_SET);
-    // for(int i = 0;i < tmp_len;i++){
-    //     int tmp;
-    //     fread(&tmp, sizeof(int), 1, SA_FILE);
-    //     printf("%d ", tmp);
-    // }
-    // printf("\n");
-    
+
     memset(del_pos, 0, sizeof(int) * del_size);
 
-    // for(int i = 0;i < del_size;i++){
-    //     printf("%d ", AUX[i]);
-    // }
-    // printf("\n");
-
-    for(int i = 0;i < del_size;i++){
+    for (int i = 0; i < del_size; i++) {
         int index = AUX[i];
-        if(index >= tmp_len / 2){
+        if (index >= tmp_len / 2) {
             int tmp = index - tmp_len / 2;
-            // printf(" i = %d SA[%d] = %d\n",i, index, SA[tmp]);
-            // del_pos[SA[tmp]] = i - 1 >= 0 ? i - 1 : del_size - 1;
             del_pos[i] = SA[tmp] - 1 < 0 ? del_size - 1 : SA[tmp] - 1;
         }
     }
@@ -222,11 +199,9 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
     fseek(SA_FILE, 0, SEEK_SET);
     fread(SA, sizeof(int), tmp_len / 2, SA_FILE);
 
-    for(int i = 0;i < del_size;i++){
+    for (int i = 0; i < del_size; i++) {
         int index = AUX[i];
-        if(index < tmp_len / 2){
-            // printf(" i = %d SA[%d] = %d\n",i, index, SA[index]);
-            // del_pos[SA[index]] = i - 1 >= 0 ? i - 1 : del_size - 1;
+        if (index < tmp_len / 2) {
             del_pos[i] = SA[index] - 1 < 0 ? del_size - 1 : SA[index] - 1;
         }
     }
@@ -239,21 +214,22 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
     fwrite(del_pos, sizeof(int), del_size, f);
     fclose(f);
 
-
     /* free SA and bkt */
     free(del_pos);
     free(SA);
     free(AUX);
+
+    remove(sa_file);
+    remove(t_file);
 }
 
-int main(int argc, char const* argv[])
-{
+int main(int argc, char const *argv[]) {
     if (argc != 5) {
         return 0;
     }
 
     char delimeter;
-    const char* del_string = argv[1];
+    const char *del_string = argv[1];
     if (strlen(del_string) > 1) {
         // assert(strcmp(del_string, "\\n") == 0);
         delimeter = '\n';
@@ -261,14 +237,27 @@ int main(int argc, char const* argv[])
         delimeter = del_string[0];
     }
 
-    const char* encode_file = argv[3];
-    const char* output_file = argv[4];
+    const char *folder = argv[2];
 
-    char* aux_file = malloc(strlen(output_file) + 5);
+    const char *encode_file = argv[3];
+    const char *output_file = argv[4];
+
+    char *aux_file = malloc(strlen(output_file) + 5);
     strcpy(aux_file, output_file);
     strcat(aux_file, ".aux");
 
-    char* BWT = encode(encode_file, output_file, aux_file,delimeter);
+    char *sa_file = malloc(strlen(folder) + 10);
+    strcpy(sa_file, folder);
+    strcat(sa_file, "/sa_file");
+    char *t_file = malloc(strlen(folder) + 10);
+    strcpy(t_file, folder);
+    strcat(t_file, "/t_file");
+
+    encode(encode_file, output_file, aux_file, sa_file, t_file, delimeter);
+
+    free(aux_file);
+    free(sa_file);
+    free(t_file);
 
     return 0;
 }
