@@ -471,7 +471,6 @@ int level0_main(char *T, int *bkt, int len, char del){
     if (name_size < T1_len) {
         rename_s(SA, len, T1_len);
         /* need recursive */
-        printf("need recursive name size is %d\n", name_size);
         level1_main(T1, SA, T1_len);
     } else {
         /* name is unique */

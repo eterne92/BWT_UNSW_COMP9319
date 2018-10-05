@@ -138,7 +138,6 @@ int level1_main(int* T, int* SA, int len)
 
     if(name_size < T1_len){
         /* need recursive */
-        printf("need recursive name size is %d\n", name_size);
         level1_main(T1, SA, T1_len);
     }
     else{

@@ -19,7 +19,6 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
     setup_files(SA_FILE, T_FILE);
 
     /* modify the data to suit the algo */
-    printf("%d is delimeter\n", delimeter);
     char prev = 0;
     for (int i = 0; i < len; i++) {
         /* all delimeters that indicates the EMPTY record is changed to 2
@@ -47,7 +46,6 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
 	int bkt[129] = {0};
 
     int del_size = level0_main(T, bkt, tmp_len, delimeter);
-    printf("%d is del_size\n", del_size);
 
     T = malloc(sizeof(char) * len);
     fseek(f, 0, SEEK_SET);
@@ -93,7 +91,6 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
      */
 
     f = fopen(output, "w+");
-    printf("traling is %d\n", trailing_del);
     fwrite(T + tmp_len, sizeof(char), trailing_del, f);
 
     
@@ -112,7 +109,6 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
         }
         BWT[i] = c;
     }
-    printf("half %d\n", i);
 
     fread(SA, sizeof(int), tmp_len - tmp_len / 2, SA_FILE);
 
@@ -127,7 +123,6 @@ char* encode(const char* filename, const char* output, const char *aux_file, cha
         }
         BWT[i] = c;
     }
-    printf("full %d\n", i);
 
 
     free(T);

@@ -1,8 +1,7 @@
 CFLAG = -std=c11 -g
-G++FLAG = -std=c++14 -g
 all: clean encoder searcher
 searcher:
-	g++ $(G++FLAG) -o bwtsearch search.cpp
+	gcc $(CFLAG) -o bwtsearch search.c
 encoder: level0 level1
 	gcc $(CFLAG) -o bwtencode encoder.c l0.o l1.o
 test: clean level0 level1
