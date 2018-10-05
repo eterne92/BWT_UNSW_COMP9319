@@ -448,10 +448,8 @@ int level0_main(char *T, int *bkt, int len, char del){
 
     /* ONLY LMS LEFT IN SA NOW */
     int T1_len = compactLMS_0(SA, T, len);
-    // print_SA(SA, len);
 
     int name_size = renameLMS_0(T, SA, T1_len, len);
-    // print_SA(SA, len);
 
     /* dump T to file */
     fwrite(T, sizeof(char), len, T_FILE);

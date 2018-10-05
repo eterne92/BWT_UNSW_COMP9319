@@ -49,11 +49,9 @@ int main(int argc, char const *argv[]) {
     aux_size = ftell(aux) / sizeof(int);
 
     const char *folder = argv[3];
-    // printf("%s\n", folder);
 
     const char *opt = argv[4];
     const char *query_string = argv[5];
-    // printf("%s\n", query_string);
 
     char *occ_table = (char *)malloc(strlen(folder) + 10);
     strcpy(occ_table, folder);
@@ -64,6 +62,7 @@ int main(int argc, char const *argv[]) {
     bwt_size = ftell(bwt_file);
 
     FILE *occ = fopen(occ_table, "r");
+    /* Try create occ file */
     int bkt[BKTSIZE + 1] = {0};
     if (occ == NULL) {
         makeOcc(occ_table, bwt_file, bkt);
@@ -161,7 +160,7 @@ int getOcc(int n, char c, FILE *occ, FILE *bwt) {
     if (offset >= len) {
         offset = len;
     }
-    // printf("offset is %d\n", offset);
+
     int bkt[BKTSIZE] = {0};
     if (offset != 0) {
         int real_offset = offset - BKTSIZE * sizeof(int);
@@ -197,12 +196,14 @@ int count(FILE *bwt, FILE *occ, const char *query, int *bkt, bool distinct,
 
     for (int i = len - 2; i >= 0; i--) {
         start = getOcc(start, query[i], occ, bwt) + bkt[query[i]];
+        /* since our getOcc is exclude with the current index, we need to count the next index */
         end = getOcc(end + 1, query[i], occ, bwt) + bkt[query[i]] - 1;
         if (start > end) {
             return 0;
         }
     }
 
+    /* -m comes here */
     if (!distinct) {
         return end - start + 1;
     }
@@ -211,22 +212,27 @@ int count(FILE *bwt, FILE *occ, const char *query, int *bkt, bool distinct,
     int pos = 0;
 
     for (int i = start; i <= end; i++) {
+        /* backward search stopped when reach a in range char or a delimeter */
         int j = backward_search(bwt, occ, i, bkt, start, end, query[0]);
         if (j != -1) {
+            /* only count delimeters */
             index[pos] = j;
             pos++;
         }
     }
 
+    /* -n comes here */
     if (!output) {
         return pos;
     }
 
+    /* get the real position, which is actually desc */
     for (int i = 0; i < pos; i++) {
         int tmp = find_aux(index[i]);
         index[i] = tmp;
     }
 
+    /* sort it so it goes from big to small */
     qsort(index, pos, sizeof(int), cmp);
 
     for (int i = 0; i < pos; i++) {
@@ -245,6 +251,7 @@ int decode(FILE *bwt, FILE *occ, int index, int *bkt, bool output) {
 
     int i = 1;
 
+    /* decode only stop at delimeter */
     while (c != delimeter) {
         int before = getOcc(index, c, occ, bwt);
         index = before + bkt[c];
@@ -261,14 +268,13 @@ int decode(FILE *bwt, FILE *occ, int index, int *bkt, bool output) {
         write_buf[pos] = buf[j];
         pos++;
     }
+    /* when output, no delimeter but a newline is cat at the end */
     write_buf[pos] = '\n';
     write_buf[pos + 1] = 0;
 
     if (output == true) {
         printf("%s", write_buf);
     }
-
-    // int ret = getOcc(index, 0, occ, bwt);
 
     free(buf);
     free(write_buf);
@@ -284,7 +290,9 @@ int backward_search(FILE *bwt, FILE *occ, int index, int *bkt, int start,
     while (c != delimeter) {
         int before = getOcc(index, c, occ, bwt);
         index = before + bkt[c];
+        /* if we find a char that is the same as the start one */
         if (c == target_char) {
+            /* we could have got into another char that will or have already been checked */
             if (index >= start && index <= end) {
                 return -1;
             }
