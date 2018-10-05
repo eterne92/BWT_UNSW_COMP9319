@@ -14,6 +14,7 @@ void encode(const char *filename, const char *output, const char *aux_file,
     char *T = malloc(sizeof(char) * len);
     fread(T, sizeof(char), sizeof(char) * len, f);
 
+    /* SA_FILE and T_FILE used to dump Suffix Array and T */
     FILE *SA_FILE = fopen(sa_file, "w+");
     FILE *T_FILE = fopen(t_file, "w+");
 
@@ -37,6 +38,7 @@ void encode(const char *filename, const char *output, const char *aux_file,
         }
     }
 
+    /* count the trailing delimeters */
     int tmp_len = len;
     int trailing_del = 0;
     while (T[tmp_len - 1] == 2) {
@@ -44,15 +46,19 @@ void encode(const char *filename, const char *output, const char *aux_file,
         trailing_del++;
     }
 
-    int bkt[129] = {0};
+    /* we assume the bkt size is 128 */
+    int bkt[BKTSIZE + 1] = {0};
 
+    /* now construct the SA for modified T */
     level0_main(T, bkt, tmp_len, delimeter);
 
+    /* at this moment, T is freed, reload it with origin file */
     T = malloc(sizeof(char) * len);
     fseek(f, 0, SEEK_SET);
     fread(T, sizeof(char), sizeof(char) * len, f);
     fclose(f);
 
+    /* from now on, never touch the whole 4n SA memory */
     int *SA = malloc(sizeof(int) * (tmp_len / 2 + 1));
 
     fseek(SA_FILE, 0, SEEK_SET);
@@ -119,6 +125,7 @@ void encode(const char *filename, const char *output, const char *aux_file,
         BWT[i] = c;
     }
 
+    /* now BWT is constructed, we don't need T anymore */
     free(T);
 
     fwrite(BWT, sizeof(char), tmp_len, f);
@@ -134,6 +141,9 @@ void encode(const char *filename, const char *output, const char *aux_file,
 
     pos = 0;
     for (i = 0; i < tmp_len / 2; i++) {
+        /* for each delimeter in BWT, it's position in SA is the position of
+         * its successor, so the delimeter's position is just before it.
+         */
         if (BWT[i] == delimeter) {
             int tmp = SA[i] - 1;
             AUX[pos] = tmp < 0 ? tmp_len - 1 : tmp;
@@ -157,6 +167,7 @@ void encode(const char *filename, const char *output, const char *aux_file,
      */
     memset(SA, 0, (tmp_len / 2) * sizeof(int));
     /* get the delimeter positions from back to front */
+    /* and set them into the SA_FILE, so we get a checktable on the file */
     int *del_pos = malloc(sizeof(int) * del_size);
     fseek(SA_FILE, 0, SEEK_SET);
     fread(del_pos, sizeof(int), del_size, SA_FILE);
@@ -183,7 +194,9 @@ void encode(const char *filename, const char *output, const char *aux_file,
     }
 
     fwrite(SA, sizeof(int), tmp_len / 2 + 1, SA_FILE);
-
+    /* now check table is done, for each position set their actual position
+     * by just checking the check table
+     */
     fseek(SA_FILE, 0, SEEK_SET);
 
     memset(del_pos, 0, sizeof(int) * del_size);
@@ -206,11 +219,6 @@ void encode(const char *filename, const char *output, const char *aux_file,
         }
     }
 
-    // for(int i = 0;i < del_size;i++){
-    //     printf("%d ", del_pos[i]);
-    // }
-    // printf("\n");
-
     fwrite(del_pos, sizeof(int), del_size, f);
     fclose(f);
 
@@ -219,6 +227,7 @@ void encode(const char *filename, const char *output, const char *aux_file,
     free(SA);
     free(AUX);
 
+    /* remove all the tmp files */
     remove(sa_file);
     remove(t_file);
 }

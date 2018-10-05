@@ -453,19 +453,21 @@ int level0_main(char *T, int *bkt, int len, char del){
     int name_size = renameLMS_0(T, SA, T1_len, len);
     // print_SA(SA, len);
 
-    /* dump sa to file */
-    dump_file(SA, MEM_MAX);
-    free(SA);
     /* dump T to file */
     fwrite(T, sizeof(char), len, T_FILE);
     free(T);
 
-    SA = malloc(sizeof(int) * len);
-    fseek(SA_FILE, 0, SEEK_SET);
-    fread(SA, sizeof(int), len, SA_FILE);
+    if(len >= MEM_MAX){
+        /* dump sa to file */
+        dump_file(SA, MEM_MAX);
+        free(SA);
+
+        SA = malloc(sizeof(int) * len);
+        fseek(SA_FILE, 0, SEEK_SET);
+        fread(SA, sizeof(int), len, SA_FILE);
+    }
 
     move_name(SA, len, T1_len);
-    // print_SA(SA, len);
 
     int* T1 = SA + len - T1_len;
     if (name_size < T1_len) {
@@ -481,35 +483,37 @@ int level0_main(char *T, int *bkt, int len, char del){
     }
 
     /* dump SA to file */
-    dump_file(SA, len);
-    free(SA);
+    if(len >= MEM_MAX){
+        dump_file(SA, len);
+        free(SA);
+        SA = malloc(sizeof(int) * MEM_MAX);
+        fseek(SA_FILE, 0, SEEK_SET);
+        fread(SA, sizeof(int), MEM_MAX, SA_FILE);
+    }
 
     fseek(T_FILE, 0, SEEK_SET);
     T = malloc(sizeof(char) * len);
     fread(T, sizeof(char), len, T_FILE);
 
-    SA = malloc(sizeof(int) * MEM_MAX);
-    fseek(SA_FILE, 0, SEEK_SET);
-    fread(SA, sizeof(int), MEM_MAX, SA_FILE);
 
     /* NOW LMS IS SORTED */
     /* SET LMS AT IT'S POSITION */
     gen_bkt(T, bkt, len, END);
     retrive0(T, SA, bkt, len, T1_len);
 
-    // print_SA(SA, len);
 
     gen_bkt(T, bkt, len, START);
     induceL_0(T, SA, bkt, len, false);
 
-    // print_SA(SA, len);
-
     gen_bkt(T, bkt, len, END);
     induceS_0(T, SA, bkt, len, false);
 
-    // print_SA(SA, len);
-
-    dump_file(SA, MEM_MAX);
+    if(len >= MEM_MAX){
+        dump_file(SA, MEM_MAX);
+    }
+    else{
+        dump_file(SA, len);
+    }
     free(SA);
     free(T);
     return del_size;
