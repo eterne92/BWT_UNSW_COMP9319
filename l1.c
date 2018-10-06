@@ -151,6 +151,7 @@ int level1_main(int* T, int* SA, int len)
     retrive1(T, SA, len, T1_len);
     induceL_1(T, SA, len, false);
     induceS_1(T, SA, len, false);
+    return 0;
 }
 
 /* same technique as level0, but we get rid of delimeters
@@ -206,9 +207,10 @@ int place_lms_1(int* T, int* SA, int len)
     }
 
     SA[0] = len - 1;
+    return 0;
 }
 
-int induceL_1(int* T, int* SA, int len, bool erase)
+void induceL_1(int* T, int* SA, int len, bool erase)
 {
     int step = 1;
     for (int i = 0; i < len; i += step) {
@@ -262,7 +264,7 @@ int induceL_1(int* T, int* SA, int len, bool erase)
     }
 }
 
-int induceS_1(int* T, int* SA, int len, bool erase)
+void induceS_1(int* T, int* SA, int len, bool erase)
 {
     int step = 1;
     for (int i = len - 1; i >= 0; i-=step) {
@@ -368,7 +370,7 @@ int renameLMS_1(int* T, int* SA, int T1_len, int T_len)
     int namecnt = 1;
     int* start = SA + T1_len;
 
-    int prev, now, prev_len;
+    int prev, now;
     prev = SA[0];
     name = 0;
     start[SA[0] / 2] = name;
@@ -471,4 +473,6 @@ int retrive1(int* T, int* SA, int len, int T1_len)
         SA[pos] = j;
         pos--;
     }
+
+    return 0;
 }

@@ -88,7 +88,7 @@ void gen_bkt(char* T, int* bkt, int len, enum DIRECTION dir)
 {
     memset(bkt, 0, BKTSIZE * sizeof(int));
     for (int i = 0; i < len; i++) {
-        char c = CHAR_VAL(T[i]);
+        unsigned char c = CHAR_VAL(T[i]);
         bkt[c]++;
     }
 
@@ -144,7 +144,7 @@ int place_lms_0(char* T, int* SA, int len, int* bkt)
         }
         if (!IS_S(T[i]) && IS_S(T[i + 1])) {
             /* T[i + 1] is a LMS */
-            char c = CHAR_VAL(T[i + 1]);
+            unsigned char c = CHAR_VAL(T[i + 1]);
             int pos = bkt[c];
             // SA[pos] = i + 1;
             set_SA(SA, pos, i + 1);
@@ -155,10 +155,11 @@ int place_lms_0(char* T, int* SA, int len, int* bkt)
     // SA[0] = len - 1;
     set_SA(SA, 0, len - 1);
     del_size++;
+    return del_size;
 }
 
 
-int induceL_0(char* T, int* SA, int* bkt, int len, bool erase)
+void induceL_0(char* T, int* SA, int* bkt, int len, bool erase)
 {
     for (int i = 0; i < len; i++) {
         int SA_i = get_SA(SA, i);
@@ -173,7 +174,7 @@ int induceL_0(char* T, int* SA, int* bkt, int len, bool erase)
                 continue;
             }
             /* now it's a L type */
-            char c = CHAR_VAL(T[j]);
+            unsigned char c = CHAR_VAL(T[j]);
             int pos = bkt[c];
             // SA[pos] = j;
             set_SA(SA, pos, j);
@@ -192,21 +193,20 @@ int induceL_0(char* T, int* SA, int* bkt, int len, bool erase)
     }
 }
 
-int induceS_0(char* T, int* SA, int* bkt, int len, bool erase)
+void induceS_0(char* T, int* SA, int* bkt, int len, bool erase)
 {
     for (int i = len - 1; i >= 0; i--) {
         int SA_i = get_SA(SA, i);
         // if (SA[i] != 0) {
         if(SA_i != 0){
             // int prev = SA[i];
-            int prev = SA_i;
             // int j = SA[i] - 1;
             int j = SA_i - 1;
             if (!IS_S(T[j])) {
                 continue;
             }
             /* now it's a S type */
-            char c = CHAR_VAL(T[j]);
+            unsigned char c = CHAR_VAL(T[j]);
             /* still we don't care about the
              * delimeters. Since they are always
              * LMS
@@ -300,7 +300,7 @@ int renameLMS_0(char* T, int* SA, int T1_len, int T_len)
         namecnt++;
     }
 
-    int prev, now, prev_len;
+    int prev, now;
     // prev = SA[del_size - 1];
     prev = get_SA(SA, del_size - 1);
     /* Now set up all the other LMS 
@@ -416,7 +416,7 @@ int retrive0(char* T, int* SA, int* bkt, int len, int T1_len)
      */
     for (int i = T1_len - 1; i >= del_size; i--) {
         int SA_i = get_SA(SA, i);
-        char c = CHAR_VAL(T[SA_i]);
+        unsigned char c = CHAR_VAL(T[SA_i]);
         int tmp = SA_i;
         // SA[i] = 0;
         set_SA(SA, i, 0);
@@ -425,6 +425,7 @@ int retrive0(char* T, int* SA, int* bkt, int len, int T1_len)
         // SA[pos] = tmp;
         set_SA(SA, pos, tmp);
     }
+    return 0;
 }
 
 

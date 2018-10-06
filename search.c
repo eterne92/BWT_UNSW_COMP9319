@@ -22,7 +22,7 @@ static int find_aux(int index) {
 int backSearch(const char *query);
 
 void makeOcc(char *occ_table, FILE *bwt_file, int *bkt);
-int getOcc(int n, char c, FILE *occ, FILE *bwt);
+int getOcc(int n, unsigned char c, FILE *occ, FILE *bwt);
 
 int count(FILE *bwt, FILE *occ, const char *query, int *bkt, bool distinct,
           bool output);
@@ -87,7 +87,7 @@ int main(int argc, char const *argv[]) {
         int cnt = count(bwt_file, occ, query_string, bkt, true, false);
         printf("%d\n", cnt);
     } else if (strcmp(opt, "-a") == 0) {
-        int cnt = count(bwt_file, occ, query_string, bkt, true, true);
+        count(bwt_file, occ, query_string, bkt, true, true);
     }
     else if(strcmp(opt, "-i") == 0){
         int start, end;
@@ -96,6 +96,9 @@ int main(int argc, char const *argv[]) {
             decode(bwt_file, occ, aux_size - i, bkt, true);
         }
     }
+
+    free(aux_file);
+    free(occ_table);
 
     return 0;
 }
@@ -117,7 +120,7 @@ void makeOcc(char *occ_table, FILE *bwt_file, int *bkt) {
     while (true) {
         readsize = fread(readbuf, sizeof(char), BUFSIZE, bwt_file);
         for (int i = 0; i < readsize; i++) {
-            char c = readbuf[i];
+            unsigned char c = readbuf[i];
             if (c == delimeter) {
                 c = 0;
             }
@@ -141,7 +144,7 @@ void makeOcc(char *occ_table, FILE *bwt_file, int *bkt) {
     fclose(occ);
 }
 
-int getOcc(int n, char c, FILE *occ, FILE *bwt) {
+int getOcc(int n, unsigned char c, FILE *occ, FILE *bwt) {
     int ret = 0;
     /* mask to get which entry */
     size_t offset = ((n & MASK) >> 10);
@@ -191,13 +194,13 @@ static int cmp(const void *a, const void *b) {
 int count(FILE *bwt, FILE *occ, const char *query, int *bkt, bool distinct,
           bool output) {
     int len = strlen(query);
-    int start = bkt[query[len - 1]];
-    int end = bkt[query[len - 1] + 1] - 1;
+    int start = bkt[(unsigned char)query[len - 1]];
+    int end = bkt[(unsigned char)query[len - 1] + 1] - 1;
 
     for (int i = len - 2; i >= 0; i--) {
-        start = getOcc(start, query[i], occ, bwt) + bkt[query[i]];
+        start = getOcc(start, query[i], occ, bwt) + bkt[(unsigned char)query[i]];
         /* since our getOcc is exclude with the current index, we need to count the next index */
-        end = getOcc(end + 1, query[i], occ, bwt) + bkt[query[i]] - 1;
+        end = getOcc(end + 1, query[i], occ, bwt) + bkt[(unsigned char)query[i]] - 1;
         if (start > end) {
             return 0;
         }
@@ -208,7 +211,7 @@ int count(FILE *bwt, FILE *occ, const char *query, int *bkt, bool distinct,
         return end - start + 1;
     }
 
-    int index[50000] = {0};
+    int index[500000] = {0};
     int pos = 0;
 
     for (int i = start; i <= end; i++) {
@@ -254,7 +257,7 @@ int decode(FILE *bwt, FILE *occ, int index, int *bkt, bool output) {
     /* decode only stop at delimeter */
     while (c != delimeter) {
         int before = getOcc(index, c, occ, bwt);
-        index = before + bkt[c];
+        index = before + bkt[(unsigned char)c];
         fseek(bwt, index, SEEK_SET);
         fread(&c, sizeof(char), 1, bwt);
         buf[i] = c;
@@ -289,7 +292,7 @@ int backward_search(FILE *bwt, FILE *occ, int index, int *bkt, int start,
 
     while (c != delimeter) {
         int before = getOcc(index, c, occ, bwt);
-        index = before + bkt[c];
+        index = before + bkt[(unsigned char)c];
         /* if we find a char that is the same as the start one */
         if (c == target_char) {
             /* we could have got into another char that will or have already been checked */
