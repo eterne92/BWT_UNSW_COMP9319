@@ -227,6 +227,8 @@ void encode(const char *filename, const char *output, const char *aux_file,
     free(SA);
     free(AUX);
 
+	fclose(SA_FILE);
+	fclose(T_FILE);
     /* remove all the tmp files */
     remove(sa_file);
     remove(t_file);
