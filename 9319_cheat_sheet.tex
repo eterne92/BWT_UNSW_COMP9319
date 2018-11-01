@@ -1,0 +1,102 @@
+\documentclass[a4paper]{article}
+\usepackage{amssymb,amsmath,amsthm,amsfonts}
+\usepackage{multicol,multirow}
+\usepackage{calc}
+\usepackage{ifthen}
+\usepackage[landscape]{geometry}
+\usepackage[colorlinks=true,citecolor=blue,linkcolor=blue]{hyperref}
+
+
+		\geometry{top=1cm,left=1cm,right=1cm,bottom=1cm} 
+		\geometry{top=1cm,left=1cm,right=1cm,bottom=1cm} 
+	
+\pagestyle{empty}
+\makeatletter
+\renewcommand{\section}{\@startsection{section}{1}{0mm}%
+                                {-1ex plus -.5ex minus -.2ex}%
+                                {0.5ex plus .2ex}%x
+                                {\normalfont\large\bfseries}}
+\renewcommand{\subsection}{\@startsection{subsection}{2}{0mm}%
+                                {-1explus -.5ex minus -.2ex}%
+                                {0.5ex plus .2ex}%
+                                {\normalfont\normalsize\bfseries}}
+\renewcommand{\subsubsection}{\@startsection{subsubsection}{3}{0mm}%
+                                {-1ex plus -.5ex minus -.2ex}%
+                                {1ex plus .2ex}%
+                                {\normalfont\small\bfseries}}
+\makeatother
+\setcounter{secnumdepth}{0}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt plus 0.5ex}
+% -----------------------------------------------------------------------
+
+\begin{document}
+
+\raggedright
+\footnotesize
+
+\begin{multicols}{3}
+\setlength{\premulticols}{1pt}
+\setlength{\postmulticols}{1pt}
+\setlength{\multicolsep}{1pt}
+\setlength{\columnsep}{2pt}
+
+\subsubsection{Entropy}
+$ \Sigma_{i = 1}^{n}{-p(s_{i})log_{2}{p(s_{i})}}$ 
+\subsubsection{Arithmetic coding}
+ENCODING \\
+get an input symbol \\
+code\_range = high - low \\
+high = low + range*high\_range(symbol) \\
+low = low + range*low\_range(symbol) \\
+output minimum precision\\
+DECODING \\
+find symbol whose range straddles the encoded number\\
+output the symbol\\
+range = symbol high value - symbol low value\\
+subtract symbol low value from encoded number\\
+divide encoded number by range
+\subsubsection{Dictionary coding LZW}
+jejunojejuno\\
+\begin{tabular}{c|c|c|c|c}
+    w & k & output & index & symbol\\
+    nil & j & & &\\
+    j & e & j & 256 & je\\
+    e & j & e & 257 & ej\\
+    j & u & j & 258 & ju\\
+    u & n & u & 259 & un\\
+    n & o & n & 260 & no\\
+    o & j & o & 261 & oj\\
+    j & e &&&\\
+    je & j & 256 & 262 & jej\\
+    j & u & &&\\
+    ju & n & 258 & 263 & jun\\
+    n& o & 260 &&\\
+\end{tabular}
+\subsubsection{Adaptive Huffman}
+Vitter's adaptive huffman:\\
+For each weight w, all leaves precede internal nodes.
+\subsubsection{Run Length BWT}
+L: Original BWT; B: BWT in bit stream; B':Front Row in bit stream; S: Compact BWT(reduce repeat char);\\
+\begin{tabular}{c|l}
+
+Origin & BANANA\$\\
+BWT & ANNB\$AA \\
+B & 1 1 0 1 1 1 0\\
+B' & 1 1 1 0 1 1 0 \\
+F & \$AAABNN\\
+S & \$ABN
+\end{tabular}
+\subsubsection{Xpath}
+//author/*\\
+// any level, * any element\\
+/bib/book/@price, @price means that price is has to be an
+attribute\\
+/bib/book/author[firstname]\\
+must have [] attribute as child\\
+\subsubsection{ISX}
+[open, close, forward max, forward min, back max, back min, no. text(leaf)]\\
+find next close, go up then go down.
+\end{multicols}
+
+\end{document}
